@@ -13,10 +13,10 @@ git commit -a -m "COMMIT MESSAGE HERE"
 
 
 Get branch from server:
-git pull BRANCH_NAME
+git pull origin BRANCH_NAME
 
 Push to server:
-git pull BRANCH_NAME
+git push origin BRANCH_NAME
 
 
 Notes:
