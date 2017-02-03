@@ -1,6 +1,6 @@
 Check branches:
 git branch
-git branch -a		(shows external)
+git branch -a		(shows external branches)
 
 Change branch:
 git checkout BRANCH_NAME
