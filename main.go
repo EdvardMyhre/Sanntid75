@@ -20,7 +20,5 @@ import "fmt"
 
 
 func main() {
-	fmt.Println("This is a test message for go compiling from the git repository Sanntid75.")
-	fmt.Println("I've made an additional message to test go's re-building process")
-	fmt.Println("A third message to test for name dependencies. This name is main")
+	fmt.Println("main function. Connectivity test")
 }
