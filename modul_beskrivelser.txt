@@ -1,0 +1,42 @@
+
+1. buton_handler
+	* Inn 
+	*
+	*
+	*
+	*
+
+2. task_manager
+	* 
+	*
+	*
+	*
+	*
+
+3. elevator_handler
+	* 
+	*
+	*
+	*
+	*
+
+4. distributing_state_machine
+	* 
+	*
+	*
+	*
+	*
+
+5. network_handler_and_decoder
+	* 
+	*
+	*
+	*
+	*
+
+6. UDP_handler
+	* 
+	*
+	*
+	*
+	*
