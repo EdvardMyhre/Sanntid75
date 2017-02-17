@@ -21,4 +21,4 @@ git push origin BRANCH_NAME
 
 Notes:
 Burde ikke skrive eller pushe til master
-Burde ikke skrive direkte i Develop. Lag egen branch, og når det funker, merge med develop.
+Burde ikke skrive direkte i Develop. Lag egen branch, og nÃ¥r det funker, merge med develop.
