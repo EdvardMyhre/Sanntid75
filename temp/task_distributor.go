@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"time"
 	"./Tester"
+	"./Network"
 )
 
 func main(){
 	go task_distributor()
 	//forever loop so the main function does not terminate
 	go Tester.Test_distributor()
+	
+	msg := Network.MainData
+	msg.source = 1
 	for{}
 
 }
