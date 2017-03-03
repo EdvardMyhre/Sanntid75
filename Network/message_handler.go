@@ -38,10 +38,10 @@ func check_error(err error) {
 
 
 func Udp_listner(port int) {
-	ServerAddr,err := net.ResolveUDPAddr("udp",fmt.Sprintf(":%d",port)) 
+	ServerAddr,err := net.ResolveUDPAddr("udp4",fmt.Sprintf(":%d",port)) 
     check_error(err)
  
-    ServerConn, err := net.ListenUDP("udp", ServerAddr)
+    ServerConn, err := net.ListenUDP("udp4", ServerAddr)
     check_error(err)
 
 
@@ -71,8 +71,8 @@ func Udp_listner(port int) {
 
 func Udp_broadcast(data MainData, port int) {
 
-	addr, _ := net.ResolveUDPAddr("udp", fmt.Sprintf("255.255.255.255:%d", port))
-	conn, _ := net.DialUDP("udp", nil ,addr)
+	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
+	conn, _ := net.DialUDP("udp4", nil ,addr)
 
     //fmt.Println(&conn)
 

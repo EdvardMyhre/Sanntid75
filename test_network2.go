@@ -24,7 +24,7 @@ func main() {
 
 
     
-    go Network.Udp_listner(10001)
+    //go Network.Udp_listner(10001)
     
 
     for i := 0; i < 6; i++ {
