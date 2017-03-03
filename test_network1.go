@@ -29,19 +29,14 @@ func main() {
     send_objekt.Data = append(send_objekt.Data,row2)
     
 
-    //time.Sleep(time.Second * 1)
     go Network.Udp_listner(10001)
 
-    //fmt.Println("er her 1")
 
     for i := 0; i < 6; i++ {
         Network.Udp_broadcast(send_objekt, 10001)
         time.Sleep(time.Second * 1)
     }
 
-    
-
-   //time.Sleep(time.Second * 1)           //Kan brukes i en uenderlig forløkke
 
 
 }
