@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 	"./Tester"
-	"./Network"
+	"../Network"
 )
 
 func main(){
@@ -12,8 +12,6 @@ func main(){
 	//forever loop so the main function does not terminate
 	go Tester.Test_distributor()
 	
-	msg := Network.MainData
-	msg.source = 1
 	for{}
 
 }

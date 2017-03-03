@@ -5,6 +5,6 @@ import (
 )
 
 
-func Testfunc() {
+func Test_distributor() {
 	fmt.Println("Tester for task distributor")
 }
