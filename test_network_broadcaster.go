@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var port int = 16569
+
 func main() {
 	a, _ := Network.LocalIP()
 
@@ -18,10 +20,10 @@ func main() {
 	send_objekt.Data = append(send_objekt.Data, row1)
 	send_objekt.Data = append(send_objekt.Data, row2)
 
-	go Network.Udp_listner(10001)
+	go Network.Udp_listner(port)
 
 	for i := 0; i < 60; i++ {
-		Network.Udp_broadcast(send_objekt, 16569)
+		Network.Udp_broadcast(send_objekt, port)
 		time.Sleep(time.Second * 1)
 	}
 
