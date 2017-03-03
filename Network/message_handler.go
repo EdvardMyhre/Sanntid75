@@ -4,7 +4,7 @@ package Network
 import (
 	"fmt"
 	"net"
-	"os"
+	//"os"
 	//"strings"
 	"time"
 )
@@ -24,10 +24,9 @@ var destination string
 func check_error(err error) {
     if err  != nil {
         fmt.Println("Error: " , err)
-        os.Exit(0)
+        //os.Exit(0)
     }
 }
-
 
 
 
@@ -56,7 +55,7 @@ func Udp_listner(port int) {
         receivedMessageBytes := []byte(receivedMessage)
 
         if err == nil {
-            data := Json_to_struct(receivedMessageBytes)
+            data := Json_to_struct_MainData(receivedMessageBytes)
             fmt.Printf("Source = %v, Destination = %v, Message_type = %v, Data = %v", data.Source, data.Destination, data.Message_type, data.Data)
             fmt.Println()
         }
@@ -80,7 +79,7 @@ func Udp_broadcast(data MainData, port int) {
 
     defer conn.Close()
 
-    send := Struct_to_json(data)
+    send := Struct_to_json_MainData(data)
     _,err1 := conn.Write(send)
     if err1 != nil {
         fmt.Println(err1)
