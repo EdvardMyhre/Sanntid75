@@ -16,7 +16,9 @@ var destination string
 //var portNr string = ":10001"
 //var BcastIP string = "129.241.187.255"
 //var BcastIP string = "255.255.255.255"
-var BcastIP string = "10.22.79.255"
+//var BcastIP string = "10.22.79.255"
+//var BcastIP string = "10.22.77.79"
+var BcastIP string = "10.22.77.255"
 
 
 
@@ -106,6 +108,7 @@ func LocalIP() (string, error) {
         defer conn.Close()
         localIP = strings.Split(conn.LocalAddr().String(), ":")[0]
     }
+    fmt.Println(localIP)
     return localIP, nil
 }
 
