@@ -20,7 +20,7 @@ func main() {
 	send_objekt.Data = append(send_objekt.Data, row1)
 	send_objekt.Data = append(send_objekt.Data, row2)
 
-	go Network.Udp_listner(port)
+	//go Network.Udp_listner(port)
 
 	for i := 0; i < 60; i++ {
 		Network.Udp_broadcast(send_objekt, port)

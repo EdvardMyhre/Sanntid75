@@ -8,6 +8,7 @@ import (
     //"time"
     "./Network"
 )
+var port int = 16569
 
 func main() {
 
@@ -24,7 +25,7 @@ func main() {
     send_objekt.Data = append(send_objekt.Data,row2)
     
 
-    Network.Udp_listner(16569)
+    Network.Udp_listner(port)
 
 /*
     for i := 0; i < 6; i++ {
