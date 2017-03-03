@@ -3,13 +3,17 @@ package main
 import (
 	"fmt"
 	"time"
+	"./Tester"
 )
 
 func main(){
-	task_distributor()
-	test_task_distributor.Test_task_distributor()
-	//fmt.Println("main function. Connectivity test")
+	go task_distributor()
+	//forever loop so the main function does not terminate
+	go Tester.Test_distributor()
+	for{}
+
 }
+
 
 func task_distributor() {
 	fmt.Println("task distributor, Connectivity test")
