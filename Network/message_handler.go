@@ -88,6 +88,11 @@ func Udp_broadcast(data MainData, port int) {
 
 
 
+
+
+
+//---------------------------- get local ip -------------------------------------
+
 var localIP string
 
 func LocalIP() (string, error) {

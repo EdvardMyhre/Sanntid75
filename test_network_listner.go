@@ -31,7 +31,7 @@ func main() {
     send_objekt.Data = append(send_objekt.Data,row2)
     
 
-    Network.Udp_listner(10001)
+    Network.Udp_listner(16569)
 
 /*
     for i := 0; i < 6; i++ {
