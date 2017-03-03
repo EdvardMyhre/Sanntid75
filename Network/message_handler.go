@@ -14,8 +14,9 @@ import (
 var source string
 var destination string
 //var portNr string = ":10001"
-var BcastIP string = "129.241.187.255"
+//var BcastIP string = "129.241.187.255"
 //var BcastIP string = "255.255.255.255"
+var BcastIP string = "10.22.79.255"
 
 
 
