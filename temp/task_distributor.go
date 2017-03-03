@@ -7,6 +7,7 @@ import (
 
 func main(){
 	task_distributor()
+	test_task_distributor.Test_task_distributor()
 	//fmt.Println("main function. Connectivity test")
 }
 
