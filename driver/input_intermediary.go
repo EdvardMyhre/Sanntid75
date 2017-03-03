@@ -4,7 +4,7 @@ package main
 
 hello()
 {
-    printf("Hello World!");
+    return 1;
 }
 */
 import "C"
