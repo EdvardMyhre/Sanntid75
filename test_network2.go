@@ -11,9 +11,10 @@ import (
 
  
 func main() {
+    a,_ := Network.LocalIP()
 
     send_objekt := Network.MainData{}
-    send_objekt.Source = "heis 2"
+    send_objekt.Source = a
     send_objekt.Destination = "heis 1"
     send_objekt.Message_type = 3
     row1 := []int{1,2,3,4,52}
