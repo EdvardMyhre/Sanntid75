@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	//"os"
-	//"strings"
+	"strings"
 	"time"
 )
 
@@ -66,8 +66,6 @@ func Udp_listner(port int) {
 
 
 
-
-
 //------------------------------ Udp_broadcast ---------------------------------------
 
 
@@ -75,6 +73,8 @@ func Udp_broadcast(data MainData, port int) {
 
 	addr, _ := net.ResolveUDPAddr("udp", fmt.Sprintf("255.255.255.255:%d", port))
 	conn, _ := net.DialUDP("udp", nil ,addr)
+
+    //fmt.Println(&conn)
 
 
     defer conn.Close()
@@ -85,5 +85,22 @@ func Udp_broadcast(data MainData, port int) {
         fmt.Println(err1)
     }
 }
+
+
+
+var localIP string
+
+func LocalIP() (string, error) {
+    if localIP == "" {
+        conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53})
+        if err != nil {
+            return "", err
+        }
+        defer conn.Close()
+        localIP = strings.Split(conn.LocalAddr().String(), ":")[0]
+    }
+    return localIP, nil
+}
+
 
 

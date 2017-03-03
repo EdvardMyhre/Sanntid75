@@ -18,8 +18,10 @@ import (
  
 func main() {
 
+    a,_ := Network.LocalIP()
+
     send_objekt := Network.MainData{}
-    send_objekt.Source = "heis 1"
+    send_objekt.Source = a
     send_objekt.Destination = "heis 2"
     //b, err := json.Marshal(data)
     send_objekt.Message_type = 3
@@ -36,7 +38,5 @@ func main() {
         Network.Udp_broadcast(send_objekt, 10001)
         time.Sleep(time.Second * 1)
     }
-
-
 
 }
