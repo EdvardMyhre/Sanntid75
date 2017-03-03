@@ -3,7 +3,7 @@ package main
 import (
     //"fmt"
     "./Network"
-    "time"
+    //"time"
 )
 
 
@@ -27,9 +27,9 @@ func main() {
     //go Network.Udp_listner(10001)
     
 
-    for i := 0; i < 6; i++ {
+    for i := 0; i < 60; i++ {
         Network.Udp_broadcast(send_objekt, 10001)
-        time.Sleep(time.Second * 1)
+        //time.Sleep(time.Second * 1)
     }
 
     

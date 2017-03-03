@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	a, _ := Network.LocalIP()
 
 	send_objekt := Network.MainData{}
