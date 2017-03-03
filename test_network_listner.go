@@ -1,10 +1,7 @@
-
-
 //-----------------------  Heis 1  ----------------
 
+package main
 
-package main 
- 
 import (
     //"fmt"
     //"net"
@@ -12,10 +9,6 @@ import (
     "./Network"
 )
 
-
-
-
- 
 func main() {
 
     a,_ := Network.LocalIP()
@@ -40,3 +33,4 @@ func main() {
     }*/
 
 }
+
