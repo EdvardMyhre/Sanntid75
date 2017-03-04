@@ -18,11 +18,12 @@ func main(){
 	go task_distributor(channel_distributor_to_task_manager, channel_task_manager_to_distributor,
 						channel_distributor_to_network, channel_network_to_distributor)
 						
-	//forever loop so the main function does not terminate
+	
 	go Tester.Test_distributor_networkEmulator(channel_network_to_distributor, channel_distributor_to_network)
 	
 	go Tester.Test_distributor_taskmanagerEmulator(channel_task_manager_to_distributor, channel_distributor_to_task_manager)
 	
+	//forever loop so the main function does not terminate
 	for{}
 
 }
@@ -76,6 +77,16 @@ func task_distributor(channel_to_task_manager chan Network.InternalMessage, chan
 						//Printfs, REMOVE later
 						fmt.Println("Received new order from Task Manager: ", internal_message_distributor_from_task_manager.Data)
 						fmt.Println("currentOrder value: ", currentOrder)
+						
+						//Construct message to Elevator Controller (via Network) ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS
+						message_distributor_to_network.Destination = Network.DESTINATION_BROADCAST
+						message_distributor_to_network.Message_type = Network.ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS
+						message_distributor_to_network.Data = [][]int{currentOrder}
+						//Update timestamp
+						task_dist_timestamp = time.Now()
+						//Send over network channel
+						channel_to_network <- message_distributor_to_network
+						
 						
 						task_distributor_state = waiting_for_response
 					} else {

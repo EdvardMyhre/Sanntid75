@@ -1,6 +1,16 @@
 
 package Network
 
+
+const(
+	DESTINATION_BROADCAST = "BROADCAST"
+	DESTINATION_BACKUP = "BACKUP"
+
+
+)
+
+
+
 //Module IDs
 const (
 	ID_MODULE_NETWORK = 0						//000 xxxxx
