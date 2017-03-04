@@ -14,7 +14,7 @@ func main() {
 	send_objekt := Network.MainData{}
 	send_objekt.Source = a
 	send_objekt.Destination = "heis 1"
-	send_objekt.Message_type = 3
+	send_objekt.Message_type = 96
 	row1 := []int{1, 2, 3, 4, 52}
 	row2 := []int{4, 5, 6, 564, 4}
 	send_objekt.Data = append(send_objekt.Data, row1)

@@ -13,7 +13,7 @@ var port int = 16569
 func main() {
 
 
-    Network.Message_distributor(port)
+    Network.Message_from_net(port)
 
 
 }
