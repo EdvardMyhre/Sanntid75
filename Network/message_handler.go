@@ -18,7 +18,8 @@ var destination string
 //var BcastIP string = "255.255.255.255"
 //var BcastIP string = "10.22.79.255"
 //var BcastIP string = "10.22.77.79"
-var BcastIP string = "10.22.77.255"
+var BcastIP string = "10.22.76.255"
+//var BcastIP string = "192.30.253.125"
 
 
 
