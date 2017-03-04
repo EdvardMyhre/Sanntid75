@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"../../Network"
+	"math/rand"
 )
 
 
@@ -14,18 +15,18 @@ func Test_distributor_networkEmulator(send_chan chan Network.MainData, receive_c
 }
 
 
-func Test_distributor_taskmanagerEmulator(send_chan chan Network.NewOrder, receive_chan chan Network.NewOrder){
+func Test_distributor_taskmanagerEmulator(send_chan chan Network.InternalMessage, receive_chan chan Network.InternalMessage){
 	fmt.Println("Tester for task distributor, task manager Emulator")
 	
-	var message_test_to_distributor Network.NewOrder
-	message_test_to_distributor.Message_type = 1
+	var internal_message_test_to_distributor Network.InternalMessage
 	for{
-		time.Sleep(1*time.Second)
-		fmt.Println("Tester function: Task Manager Emulator Ping")
 		
-		send_chan <- message_test_to_distributor
+		internal_message_test_to_distributor.Message_type = Network.ID_MSG_TYPE_DISTRIBUTOR_NEW_COMMAND
+		randomData := []int{rand.Intn(5),rand.Intn(2)}
+		internal_message_test_to_distributor.Data = randomData
+		time.Sleep(5*time.Second)
 		
-		message_test_to_distributor.Message_type += 1
+		send_chan <- internal_message_test_to_distributor
 	}	
 	
 	

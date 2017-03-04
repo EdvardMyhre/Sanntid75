@@ -12,8 +12,8 @@ func main(){
 	channel_distributor_to_network := make(chan Network.MainData)
 	channel_network_to_distributor := make(chan Network.MainData)
 	
-	channel_task_manager_to_distributor := make(chan Network.NewOrder)
-	channel_distributor_to_task_manager := make(chan Network.NewOrder)
+	channel_task_manager_to_distributor := make(chan Network.InternalMessage)
+	channel_distributor_to_task_manager := make(chan Network.InternalMessage)
 	
 	go task_distributor(channel_distributor_to_task_manager, channel_task_manager_to_distributor,
 						channel_distributor_to_network, channel_network_to_distributor)
@@ -28,7 +28,7 @@ func main(){
 }
 
 
-func task_distributor(channel_to_task_manager chan Network.NewOrder, channel_from_task_manager chan Network.NewOrder,
+func task_distributor(channel_to_task_manager chan Network.InternalMessage, channel_from_task_manager chan Network.InternalMessage,
 						channel_to_network chan Network.MainData, channel_from_network chan Network.MainData) {
 	fmt.Println("task distributor, Connectivity test")
 	const (
@@ -37,8 +37,12 @@ func task_distributor(channel_to_task_manager chan Network.NewOrder, channel_fro
 		send_choice = 5				//100
 									//111
 	)
+	
 	//State machine variable
 	var task_distributor_state int = waiting_for_task
+	
+	//currentorder = {floor, direction}
+	var currentOrder []int
 	
 	//Timestamp variable
 	task_dist_timestamp := time.Now()
@@ -46,10 +50,10 @@ func task_distributor(channel_to_task_manager chan Network.NewOrder, channel_fro
 	//Variables used for channels
 	var message_distributor_to_network Network.MainData
 	var message_distributor_from_network Network.MainData
-	var message_distributor_to_task_manager Network.NewOrder
-	var message_distributor_from_task_manager Network.NewOrder
+	var internal_message_distributor_to_task_manager Network.InternalMessage
+	var internal_message_distributor_from_task_manager Network.InternalMessage
 	
-	fmt.Println("Just so Go doesnt complain about varible usage: ",message_distributor_to_network, message_distributor_from_network, message_distributor_to_task_manager, message_distributor_from_task_manager )
+	fmt.Println("Just so Go doesnt complain about varible usage: ",message_distributor_to_network, message_distributor_from_network, internal_message_distributor_to_task_manager, internal_message_distributor_from_task_manager )
 	
 	//TEMP: Writing out starting timestamp
 	fmt.Println("Timestamp: ",task_dist_timestamp)
@@ -65,14 +69,18 @@ func task_distributor(channel_to_task_manager chan Network.NewOrder, channel_fro
 			//fmt.Println("Waiting for task")
 			
 			select{
-				case message_distributor_from_task_manager := <-channel_from_task_manager:
-					if message_distributor_from_task_manager.Message_type == Network.ID_MSG_TYPE_DISTIBUTOR_NEW_COMMAND {
-						fmt.Println("Distributor received new command from Task Manager")
-						fmt.Println("Send request message to network, and enter waiting_for_response state")
-					
+				case internal_message_distributor_from_task_manager := <-channel_from_task_manager:
+					if internal_message_distributor_from_task_manager.Message_type == Network.ID_MSG_TYPE_DISTRIBUTOR_NEW_COMMAND {
+						//Update current order variable
+						currentOrder = internal_message_distributor_from_task_manager.Data
+						//Printfs, REMOVE later
+						fmt.Println("Received new order from Task Manager: ", internal_message_distributor_from_task_manager.Data)
+						fmt.Println("currentOrder value: ", currentOrder)
+						
 						task_distributor_state = waiting_for_response
 					} else {
 						fmt.Println("Received some other message")
+						fmt.Println("MsgTypeID given: ", internal_message_distributor_from_task_manager.Message_type)
 					}
 					
 				default:
