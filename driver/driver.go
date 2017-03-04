@@ -42,7 +42,7 @@ func SetMotorDirection(direction int) {
 
 }
 
-func SetButtonLamp(buttonType int, floor int, value C.int) {
+func SetButtonLamp(buttonType int, floor int, value int) {
 
 	// Cast Go ints to C ints
 	c_floor := C.int(floor)
