@@ -47,7 +47,6 @@ func Udp_listner(port int) MainData {
  
     ServerConn, err := net.ListenUDP("udp", ServerAddr)
     check_error(err)
-    fmt.Println("er i udp_listner")
 
 
     buf := make([]byte, 1024)
@@ -55,7 +54,6 @@ func Udp_listner(port int) MainData {
     for {
     	defer ServerConn.Close()
        	time.Sleep(time.Second * 1)
-        fmt.Println("hei er i udp_listner og for")
     	n,_,err := ServerConn.ReadFromUDP(buf)
         receivedsend_objekt := string(buf[0:n])
         receivedsend_objektBytes := []byte(receivedsend_objekt)

@@ -27,15 +27,24 @@ func LocalIP() (string, error) {
     return localIP, nil
 }
 
+
+
 //------------------------------ message_distributor ---------------------------------------
 
 func Message_distributor(port int) {
-    fmt.Println("er i Message_distributor")
     var message MainData
-    fmt.Println(port)
     message = Udp_listner(port)
-    fmt.Printf("Source = %v, Destination = %v, Message_type = %v, Data = %v", message.Source, message.Destination, message.Message_type, message.Data)
-    fmt.Println()
+    switch message.Message_type{
+    case 1:
+        fmt.Println("vi er i case 1")
+    case 2:
+        fmt.Println("vi er i case 2")
+    case 3:
+        fmt.Println("vi er i case 3")
+    }
+
+    //fmt.Printf("Source = %v, Destination = %v, Message_type = %v, Data = %v", message.Source, message.Destination, message.Message_type, message.Data)
+    //fmt.Println()
 
 }
 
