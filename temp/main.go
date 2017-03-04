@@ -21,4 +21,5 @@ import "fmt"
 
 func main() {
 	fmt.Println("main function. Connectivity test")
+	go Task_distributor()
 }
