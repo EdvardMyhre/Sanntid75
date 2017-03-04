@@ -44,6 +44,8 @@ func task_distributor(channel_to_task_manager chan Network.InternalMessage, chan
 	
 	//currentorder = {floor, direction}
 	var currentOrder []int
+	//Response array
+	var weightResponses []Network.MainData
 	
 	//Timestamp variable
 	task_dist_timestamp := time.Now()
@@ -66,56 +68,78 @@ func task_distributor(channel_to_task_manager chan Network.InternalMessage, chan
 	for {
 		switch task_distributor_state{
 		case waiting_for_task:
-			//Waits for new task from task_manager
-			//fmt.Println("Waiting for task")
 			
 			select{
 				case internal_message_distributor_from_task_manager := <-channel_from_task_manager:
 					if internal_message_distributor_from_task_manager.Message_type == Network.ID_MSG_TYPE_DISTRIBUTOR_NEW_COMMAND {
+						
 						//Update current order variable
 						currentOrder = internal_message_distributor_from_task_manager.Data
 						//Printfs, REMOVE later
 						fmt.Println("Received new order from Task Manager: ", internal_message_distributor_from_task_manager.Data)
-						fmt.Println("currentOrder value: ", currentOrder)
 						
 						//Construct message to Elevator Controller (via Network) ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS
 						message_distributor_to_network.Destination = Network.DESTINATION_BROADCAST
 						message_distributor_to_network.Message_type = Network.ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS
 						message_distributor_to_network.Data = [][]int{currentOrder}
-						//Update timestamp
+						//Update timestamp and clear response array
 						task_dist_timestamp = time.Now()
+						weightResponses = nil
 						//Send over network channel
 						channel_to_network <- message_distributor_to_network
 						
 						
 						task_distributor_state = waiting_for_response
 					} else {
+						//Received some other message
 						fmt.Println("Received some other message")
 						fmt.Println("MsgTypeID given: ", internal_message_distributor_from_task_manager.Message_type)
 					}
 					
 				default:
-					//Do nothing for now.
+					//No message ready for read. Do nothing
 
 			
 			}
 			
 			
 		case waiting_for_response:
-			//Waits for other nodes to respond
-			//fmt.Println("Waiting for response")
-			task_distributor_state = 0
-			
-			
-		case send_choice:
-			//Sends message containing the node chosen for task
-			
-			
-			
+			select{
+				case message_distributor_from_network := <- channel_from_network:
+					weightResponses = append(weightResponses, message_distributor_from_network)
+					
+				default:
+					if time.Since(task_dist_timestamp).Seconds() > Network.TIMEOUT_MESSAGE_RESPONSE{
+						fmt.Println("Weight responses given: ",weightResponses)
+						if len(weightResponses) <= 0 {
+							fmt.Println("Did not receive any responses")
+						} else {
+							
+							var responseChosen Network.MainData = weightResponses[0]
+							for i := 0 ; i <len(weightResponses) ; i++{
+								if weightResponses[i].Data[0][0] < responseChosen.Data[0][0] {
+								responseChosen = weightResponses[i]
+								}
+							}
+							
+							message_distributor_to_network.Destination = responseChosen.Source
+							message_distributor_to_network.Message_type = Network.ID_MSG_TYPE_ELEVATOR_HANDLER_DISTRIBUTED_ORDER
+							message_distributor_to_network.Data = [][]int{currentOrder}
+							
+							channel_to_network <- message_distributor_to_network
+																
+						}
+						task_distributor_state = waiting_for_task
+						
+					} else {
+						//Do nothing
+					}						
+			}	
 		default:
 			task_distributor_state = waiting_for_task	
 			
 			fmt.Println("Time difference: ",time.Since(task_dist_timestamp).Seconds())
+			fmt.Println("")
 			
 		}
 	}
