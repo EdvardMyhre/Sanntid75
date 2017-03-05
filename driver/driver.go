@@ -8,12 +8,11 @@ import "C"
 import (
 	"fmt"
 
-	"../config"
 	"../types"
 )
 
 func Init() {
-	switch config.ElevatorType {
+	switch types.ElevatorType {
 	case types.ET_SIM:
 		C.elev_init(C.ET_Simulation)
 		break

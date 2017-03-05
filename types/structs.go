@@ -1,13 +1,15 @@
 package types
 
-type Task struct { // Data from buttons are stored here
-    Elev_id int
-    Button_type int
-    Floor int		
+import "time"
+
+type Button struct { // Data from buttons are stored here
+    Type int
+    Floor int
+    Instant time.Time		
 }
 
 type Status struct {
 	Floor int
-	Prev_floor
+	Prev_floor int
 	Finished int
 }

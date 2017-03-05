@@ -1,6 +1,10 @@
 package types
 
 const (
+	ElevatorType = 0 //1 is simulation, 0 is comedi
+)
+
+const (
 	NUMBER_OF_FLOORS = 4
 	NUMBER_OF_BTN_TYPES = 3
 )
@@ -22,4 +26,8 @@ const (
 	BTN_TYPE_COMMAND   = 2
 )
 
+const (
+	LAMP_OFF = 0
+	LAMP_ON = 1
+)
 
