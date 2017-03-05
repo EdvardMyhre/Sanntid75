@@ -8,12 +8,12 @@ import (
     //"time"
     "./Network"
 )
-var port int = 16569
+//var port int = 16569
 
 func main() {
 
 
-    Network.Message_from_net(port)
+    Network.Message_from_net()
 
 
 }
