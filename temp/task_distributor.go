@@ -29,71 +29,60 @@ func main(){
 }
 
 
-func task_distributor(channel_to_task_manager chan Network.InternalMessage, channel_from_task_manager chan Network.InternalMessage,
-						channel_to_network chan Network.MainData, channel_from_network chan Network.MainData) {
+func task_distributor(	channel_to_task_manager chan Network.InternalMessage, 	channel_from_task_manager chan Network.InternalMessage,
+						channel_to_network chan Network.MainData, 				channel_from_network chan Network.MainData) {
+	
 	fmt.Println("task distributor, Connectivity test")
+	
+	//Constants for state machine
 	const (
-		waiting_for_task = 1		//001
-		waiting_for_response = 2	//010
-		send_choice = 5				//100
-									//111
+		waiting_for_newOrder = 1		//001
+		waiting_for_weightResponses = 2	//010
 	)
 	
 	//State machine variable
-	var task_distributor_state int = waiting_for_task
-	
-	//currentorder = {floor, direction}
+	var task_distributor_state int = waiting_for_newOrder
+	//currentOrder = {floor, direction}
 	var currentOrder []int
 	//Response array
 	var weightResponses []Network.MainData
-	
 	//Timestamp variable
 	task_dist_timestamp := time.Now()
-	
 	//Variables used for channels
-	var message_distributor_to_network Network.MainData
-	var message_distributor_from_network Network.MainData
-	var internal_message_distributor_to_task_manager Network.InternalMessage
-	var internal_message_distributor_from_task_manager Network.InternalMessage
-	
-	fmt.Println("Just so Go doesnt complain about varible usage: ",message_distributor_to_network, message_distributor_from_network, internal_message_distributor_to_task_manager, internal_message_distributor_from_task_manager )
-	
-	//TEMP: Writing out starting timestamp
-	fmt.Println("Timestamp: ",task_dist_timestamp)
-	
-	
-	
-	
+	var message_distributingOrder Network.MainData
+	var message_orderDetails Network.InternalMessage
+	fmt.Println("Just so Go doesnt complain about varible usage: ",message_distributingOrder, message_orderDetails )
+
 	
 	for {
 		switch task_distributor_state{
-		case waiting_for_task:
+		case waiting_for_newOrder:
 			
 			select{
-				case internal_message_distributor_from_task_manager := <-channel_from_task_manager:
-					if internal_message_distributor_from_task_manager.Message_type == Network.ID_MSG_TYPE_DISTRIBUTOR_NEW_COMMAND {
+				case message_orderDetails := <-channel_from_task_manager:
+					if message_orderDetails.Message_type == Network.MESSAGE_TYPE_DISTRIBUTE_NEWORDER {
 						
 						//Update current order variable
-						currentOrder = internal_message_distributor_from_task_manager.Data
+						currentOrder = message_orderDetails.Data
 						//Printfs, REMOVE later
-						fmt.Println("Received new order from Task Manager: ", internal_message_distributor_from_task_manager.Data)
+						fmt.Println("Received new order from Task Manager: ", message_orderDetails.Data)
 						
 						//Construct message to Elevator Controller (via Network) ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS
-						message_distributor_to_network.Destination = Network.DESTINATION_BROADCAST
-						message_distributor_to_network.Message_type = Network.ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS
-						message_distributor_to_network.Data = [][]int{currentOrder}
+						message_distributingOrder.Destination = Network.DESTINATION_BROADCAST
+						message_distributingOrder.Message_type = Network.MESSAGE_TYPE_REQUEST_WEIGHT
+						message_distributingOrder.Data = [][]int{currentOrder}
 						//Update timestamp and clear response array
 						task_dist_timestamp = time.Now()
 						weightResponses = nil
 						//Send over network channel
-						channel_to_network <- message_distributor_to_network
+						channel_to_network <- message_distributingOrder
 						
 						
-						task_distributor_state = waiting_for_response
+						task_distributor_state = waiting_for_weightResponses
 					} else {
 						//Received some other message
 						fmt.Println("Received some other message")
-						fmt.Println("MsgTypeID given: ", internal_message_distributor_from_task_manager.Message_type)
+						fmt.Println("Message Type received: ", message_orderDetails.Message_type)
 					}
 					
 				default:
@@ -103,10 +92,10 @@ func task_distributor(channel_to_task_manager chan Network.InternalMessage, chan
 			}
 			
 			
-		case waiting_for_response:
+		case waiting_for_weightResponses:
 			select{
-				case message_distributor_from_network := <- channel_from_network:
-					weightResponses = append(weightResponses, message_distributor_from_network)
+				case message_distributingOrder := <- channel_from_network:
+					weightResponses = append(weightResponses, message_distributingOrder)
 					
 				default:
 					if time.Since(task_dist_timestamp).Seconds() > Network.TIMEOUT_MESSAGE_RESPONSE{
@@ -122,21 +111,21 @@ func task_distributor(channel_to_task_manager chan Network.InternalMessage, chan
 								}
 							}
 							
-							message_distributor_to_network.Destination = responseChosen.Source
-							message_distributor_to_network.Message_type = Network.ID_MSG_TYPE_ELEVATOR_HANDLER_DISTRIBUTED_ORDER
-							message_distributor_to_network.Data = [][]int{currentOrder}
+							message_distributingOrder.Destination = responseChosen.Source
+							message_distributingOrder.Message_type = Network.MESSAGE_TYPE_DISTRIBUTE_ORDER
+							message_distributingOrder.Data = [][]int{currentOrder}
 							
-							channel_to_network <- message_distributor_to_network
+							channel_to_network <- message_distributingOrder
 																
 						}
-						task_distributor_state = waiting_for_task
+						task_distributor_state = waiting_for_newOrder
 						
 					} else {
 						//Do nothing
 					}						
 			}	
 		default:
-			task_distributor_state = waiting_for_task	
+			task_distributor_state = waiting_for_newOrder	
 			
 			fmt.Println("Time difference: ",time.Since(task_dist_timestamp).Seconds())
 			fmt.Println("")

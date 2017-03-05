@@ -9,21 +9,20 @@ import (
 
 
 func Test_distributor_networkEmulator(send_chan chan Network.MainData, receive_chan chan Network.MainData) {
-	fmt.Println("Tester for task distributor, Network Emulator")
 	
 	var network_message_receive Network.MainData
 	var network_message_send Network.MainData
 	
-	fmt.Println("To allow execution: ", network_message_receive, network_message_send)
+	fmt.Println("Emulator Running: Network Module for Distributor testing: ", network_message_receive, network_message_send)
 	
 	for{
 		select{
 			case network_message_receive := <- receive_chan:
-			if network_message_receive.Message_type == Network.ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS {
+			if network_message_receive.Message_type == Network.MESSAGE_TYPE_REQUEST_WEIGHT {
 				//Build response message
 				network_message_send.Source = "10"+"a"
 				network_message_send.Destination = network_message_receive.Source
-				network_message_send.Message_type = Network.ID_MSG_TYPE_DISTRIBUTOR_RESPONSE_WEIGHTS
+				network_message_send.Message_type = Network.MESSAGE_TYPE_GIVE_WEIGHT
 				
 				iterates := rand.Intn(6)
 				
@@ -38,7 +37,7 @@ func Test_distributor_networkEmulator(send_chan chan Network.MainData, receive_c
 				
 				
 				
-			} else if network_message_receive.Message_type == Network.ID_MSG_TYPE_ELEVATOR_HANDLER_DISTRIBUTED_ORDER {
+			} else if network_message_receive.Message_type == Network.MESSAGE_TYPE_DISTRIBUTE_ORDER {
 				fmt.Println("Distributor distributed the following order: ",network_message_receive)
 				fmt.Println("")
 				fmt.Println("")
@@ -61,12 +60,12 @@ func Test_distributor_networkEmulator(send_chan chan Network.MainData, receive_c
 
 
 func Test_distributor_taskmanagerEmulator(send_chan chan Network.InternalMessage, receive_chan chan Network.InternalMessage){
-	fmt.Println("Tester for task distributor, task manager Emulator")
+	fmt.Println("Emulator Running: Task Manager for Distributor testing")
 	
 	var internal_message_test_to_distributor Network.InternalMessage
 	for{
 		
-		internal_message_test_to_distributor.Message_type = Network.ID_MSG_TYPE_DISTRIBUTOR_NEW_COMMAND
+		internal_message_test_to_distributor.Message_type = Network.MESSAGE_TYPE_DISTRIBUTE_NEWORDER
 		randomData := []int{rand.Intn(5),rand.Intn(2)}
 		internal_message_test_to_distributor.Data = randomData
 		time.Sleep(5*time.Second)

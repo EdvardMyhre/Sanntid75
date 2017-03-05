@@ -7,8 +7,8 @@ const(
 )
 
 const(
-	DESTINATION_BROADCAST = "BROADCAST"
-	DESTINATION_BACKUP = "BACKUP"
+	DESTINATION_BROADCAST = "broadcast"
+	DESTINATION_BACKUP = "backup"
 
 
 )
@@ -27,41 +27,24 @@ const (
 //Message Constants
 const (
 
-		//DISTRIBUTOR: Input Messages
-		//From Task Manager
-		ID_MSG_TYPE_DISTRIBUTOR_NEW_COMMAND = (ID_MODULE_DISTRIBUTOR | 24)		//xxx 11000
-		ID_MSG_TYPE_DISTRIBUTOR_REQUEST_STATUS = (ID_MODULE_DISTRIBUTOR | 20)		//xxx 10100
-		//From Network Module
-		ID_MSG_TYPE_DISTRIBUTOR_RESPONSE_WEIGHTS = (ID_MODULE_DISTRIBUTOR | 18)	//xxx 10010
-		//DISTRUBUTOR Messages DONE
+		
+		//Message types used by distributor
+		MESSAGE_TYPE_REQUEST_WEIGHT = (ID_MODULE_ELEVATOR_CONTROLLER | 24)		//xxx 11000
+		MESSAGE_TYPE_DISTRIBUTE_ORDER = (ID_MODULE_ELEVATOR_CONTROLLER | 20)		//xxx 10100
+		MESSAGE_TYPE_GIVE_DISTRIBUTOR_STATUS = (ID_MODULE_TASK_MANAGER | 20)
 		
 		
 		
+		//Message types used by task manager
+		MESSAGE_TYPE_DISTRIBUTE_NEWORDER = (ID_MODULE_DISTRIBUTOR | 24)		//xxx 11000
+		MESSAGE_TYPE_REQUEST_DISTRIBUTOR_STATUS = (ID_MODULE_DISTRIBUTOR | 20)		//xxx 10100
 		
 		
-		//ELEVATOR CONTROLLER: Input Messages
-		//From Distributor (Via Network)
-		ID_MSG_TYPE_ELEVATOR_CONTROLLER_REQUEST_WEIGHTS = (ID_MODULE_ELEVATOR_CONTROLLER | 24)		//xxx 11000
-		ID_MSG_TYPE_ELEVATOR_HANDLER_DISTRIBUTED_ORDER = (ID_MODULE_ELEVATOR_CONTROLLER | 20)		//xxx 10100
-		//From Network Module
-		
-		//From Task Manager
-		
-		//ELEVATOR CONTROLLER Messages DONE
+		//Message types used by elevator controller
+		MESSAGE_TYPE_GIVE_WEIGHT = (ID_MODULE_DISTRIBUTOR | 18)	//xxx 10010
 		
 		
 		
-		
-		
-		
-				
-		//TASK MANAGER: Input Messages
-		//From Distributor
-		ID_MSG_TYPE_TASK_MANAGER_GIVE_STATUS = (ID_MODULE_TASK_MANAGER | 20)
-		//From Elevator Controller
-		
-		//From Network Module
-		
-		
+		//Message types used by network module
 		
 	)
