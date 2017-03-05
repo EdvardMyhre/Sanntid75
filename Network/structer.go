@@ -8,7 +8,7 @@ type Command struct { // Dette er dataen til elevator_handler som lagres i comma
 
 type InternalMessage struct { // Mellom moduler (ikke network)
 	Message_type int
-    Data [] int
+    Data []int
 }
 
 type Button struct { // Data from buttons are stored here
