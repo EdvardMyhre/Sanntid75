@@ -3,79 +3,128 @@ package main
 import (
 	"./network/bcast"
 	"./network/localip"
+	"./network/messageid"
 	"./network/peers"
+	"./network/structer"
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 )
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//  will be received as zero-values.
-type HelloMsg struct {
-	Message string
-	Iter    int
+func main() {
+
+	//------------------------ Kanaler mellom moduler -------------------------------------
+
+	//assigned_tasks_manager_to_network := make(chan structer.MainData)
+	//network_to_assigned_tasks_manager := make(chan structer.MainData)
+
+	//distributing_state_machine_to_network := make(chan structer.MainData)
+	//network_to_distributing_state_machine := make(chan structer.MainData)
+
+	//task_manager_to_network := make(chan structer.MainData)
+	//network_to_task_manager := make(chan structer.MainData)
+
+	//-----------------------  Lager kanal som har oversikt over hvem som er i livet --------------------
+	peerUpdateCh := make(chan peers.PeerUpdate)
+	peerTxEnable := make(chan bool)
+
+	//-----------------------  Lager kanaler for å sende og receive meldinger --------------------
+	message_send := make(chan structer.MainData)
+	message_received := make(chan structer.MainData)
+
+	id := find_localip()
+	myBackupId := ""
+
+	//-----------------------  Sjekker hvem som er online --------------------
+	go peers.Transmitter(50018, id, peerTxEnable)
+	go peers.Receiver(50018, peerUpdateCh)
+
+	//-----------------------  Sender og mottar fra broadcast --------------------
+	go bcast.Transmitter(40018, message_send)
+	go bcast.Receiver(40018, message_received)
+
+	//-----------------------  Lager et objekt som sendes ut --------------------
+	go func() {
+		message := structer.MainData{}
+		message.Source = id
+		message.Destination = "broadcast"
+		message.Message_type = messageid.ID_MODULE_DISTRIBUTOR
+		row1 := []int{1, 2, 3, 4, 52}
+		row2 := []int{4, 5, 6, 564, 4}
+		message.Data = append(message.Data, row1)
+		message.Data = append(message.Data, row2)
+
+		for {
+			var i int
+			i++
+			message_send <- message
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	//-----------------------  Printer ut hva som kommer fra broadcast og hvem som er i livet --------------------
+	fmt.Println("Started")
+	for {
+		select {
+		case p := <-peerUpdateCh:
+			myBackupId = find_backup(id, p)
+			//fmt.Println("Min id er:       ", id)
+			fmt.Println("Min backupid er: ", myBackupId)
+			//fmt.Printf("Peer update:\n")
+			fmt.Printf("  Peers:    %q\n", p.Peers)
+			fmt.Printf("  Backup:   %q\n", p.Backup)
+			//fmt.Printf("  New:      %q\n", p.New)
+			//fmt.Printf("  Lost:     %q\n", p.Lost)
+
+		case a := <-message_received:
+			//fmt.Println(a)
+			switch a.Message_type & 224 {
+
+			case messageid.ID_MODULE_DISTRIBUTOR:
+				//fmt.Println("Sender til Distributor:      ", a)
+				//network_to_distributing_state_machine <- a
+
+			case messageid.ID_MODULE_TASK_MANAGER:
+				//network_to_task_manager <- a
+				fmt.Println("Sender til task_manager      ", a)
+
+			case messageid.ID_MODULE_ELEVATOR_CONTROLLER:
+				fmt.Println("Sender til elvator controller      ", a)
+				//network_to_assigned_tasks_manager <- a
+			}
+		}
+	}
 }
 
-func main() {
-	// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
+//--------------------- Finner din backup  -----------------------------
+func find_backup(id string, p peers.PeerUpdate) string {
+	index := sort.SearchStrings(p.Peers, id)
+	myBackupId := ""
+	for i := range p.Backup {
+		if i == index && p.Backup[i] != id {
+			myBackupId = p.Backup[i]
+			break
+		}
+	}
+	return myBackupId
+}
+
+//-----------------------  Finner lokalip --------------------
+func find_localip() string {
+
 	var id string
 	flag.StringVar(&id, "id", "", "id of this peer")
 	flag.Parse()
 
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
 	if id == "" {
 		localIP, err := localip.LocalIP()
 		if err != nil {
 			fmt.Println(err)
 			localIP = "DISCONNECTED"
 		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+		id = fmt.Sprintf("%s-%d", localIP, os.Getpid())
 	}
-
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
-	peerUpdateCh := make(chan peers.PeerUpdate)
-	// We can disable/enable the transmitter after it has been started.
-	// This could be used to signal that we are somehow "unavailable".
-	peerTxEnable := make(chan bool)
-	go peers.Transmitter(15647, id, peerTxEnable)
-	go peers.Receiver(15647, peerUpdateCh)
-
-	// We make channels for sending and receiving our custom data types
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(16569, helloTx)
-	go bcast.Receiver(16569, helloRx)
-
-	// The example message. We just send one of these every second.
-	go func() {
-		helloMsg := HelloMsg{"Hello from " + id, 0}
-		for {
-			helloMsg.Iter++
-			helloTx <- helloMsg
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
-	fmt.Println("Started")
-	for {
-		select {
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
-
-		case a := <-helloRx:
-			fmt.Printf("Received: %#v\n", a)
-		}
-	}
+	return id
 }
