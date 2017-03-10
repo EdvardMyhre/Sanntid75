@@ -50,19 +50,20 @@ func Udp_listner(port int) MainData {
     fmt.Println("er i udp_listner")
 
 
-    buf := make([]byte, 1024)
+    //buf := make([]byte, 1024)
 
     for {
     	defer ServerConn.Close()
        	time.Sleep(time.Second * 1)
         fmt.Println("hei er i udp_listner og for")
-    	n,_,err := ServerConn.ReadFromUDP(buf)
-        receivedsend_objekt := string(buf[0:n])
-        receivedsend_objektBytes := []byte(receivedsend_objekt)
+    	//n,_,err := ServerConn.ReadFromUDP(buf)
+        //receivedsend_objekt := string(buf[0:n])
+        //receivedsend_objektBytes := []byte(receivedsend_objekt)
         
 
-        if err == nil {
-            data := Json_to_struct_MainData(receivedsend_objektBytes)
+       if err == nil {
+            //data := Json_to_struct_MainData(receivedsend_objektBytes)
+			var data MainData
             //fmt.Printf("Source = %v, Destination = %v, send_objekt_type = %v, Data = %v", data.Source, data.Destination, data.send_objekt_type, data.Data)
             //fmt.Println()
             return data
@@ -84,7 +85,8 @@ func Udp_broadcast(data MainData, port int) {
 
     defer conn.Close()
 
-    send := Struct_to_json_MainData(data)
+    //send := Struct_to_json_MainData(data)
+	var send []byte 
     _,err1 := conn.Write(send)
     if err1 != nil {
         fmt.Println(err1)

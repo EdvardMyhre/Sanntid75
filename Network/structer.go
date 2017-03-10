@@ -12,9 +12,9 @@ type InternalMessage struct { // Mellom moduler (ikke network)
 }
 
 type Button struct { // Data from buttons are stored here
-    Elev_id int
     Button_type int
-    Floor int		
+    Floor int
+	Add int
 }
 
 type MainData struct { // Dette som sendes mellom heisene og legges i backoup
