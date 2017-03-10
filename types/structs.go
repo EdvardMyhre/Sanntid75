@@ -15,6 +15,7 @@ type Button struct {
 }
 
 type Status struct {
+	Destination_floor int
 	Floor int
 	Prev_floor int
 	Finished int

@@ -12,37 +12,37 @@ func Controller(statusc chan<- types.Status, taskc <-chan int){
 	}
 	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
 
-	status := types.Status{Floor: 0, Prev_floor: 1, Finished: 1}
-	destination_floor := 0
+	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1}
 	floor_signal := 0
 	driver.SetFloorIndicator(0)
 
 	for{
 		floor_signal = driver.GetFloorSensorSignal()
+
 		if floor_signal >= 0 && floor_signal != status.Floor{
 			status.Prev_floor = status.Floor
 			status.Floor = floor_signal
 			driver.SetFloorIndicator(status.Floor)
-			statusc <- status 								//block trøbbel?
+			statusc <- status
 		}
 
 		if status.Finished == 1{
-			destination_floor = <- taskc
+			status.Destination_floor = <- taskc
 			status.Finished = 0
 			statusc <- status
 		}
 
 		if status.Finished == 0{
-			if floor_signal == destination_floor{
+			if floor_signal == status.Destination_floor{
 				driver.SetMotorDirection(types.MOTOR_DIR_STOP)
 				driver.SetDoorOpenLamp(types.LAMP_ON)
 				time.Sleep(time.Second * 4)
 				driver.SetDoorOpenLamp(types.LAMP_OFF)
 				status.Finished = 1
-				statusc <- status //block trøbbel?
-			} else if floor_signal >= 0 && floor_signal < destination_floor{
+				statusc <- status
+			} else if floor_signal >= 0 && floor_signal < status.Destination_floor{
 				driver.SetMotorDirection(types.MOTOR_DIR_UP)
-			} else if floor_signal >= 0 && floor_signal > destination_floor{
+			} else if floor_signal >= 0 && floor_signal > status.Destination_floor{
 				driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 			}
 		}
@@ -55,6 +55,7 @@ func ButtonPoller(taskc chan<- types.Task){
 	//Initializing variables
 	button := types.Button{}
 	task := types.Task{}
+	task.Add = 255;
 	var button_pushes []types.Button
 	var button_pushes_this_loop []types.Button
 
@@ -145,20 +146,20 @@ func ButtonPoller(taskc chan<- types.Task){
 // 	for{
 // 		select{
 // 			case status := <- statusc:
-// 				fmt.Println("Floor : ", status.Floor, " Prev_floor: ", status.Prev_floor, " Finished: ", status.Finished)
+// 				fmt.Println("Destination floor: ", status.Destination_floor, " Floor : ", status.Floor, " Prev_floor: ", status.Prev_floor, " Finished: ", status.Finished)
 // 			case <- time.After(time.Second):
 // 		}
-// 		if rand.Intn(10) == 0{
+// 		if rand.Intn(3) == 0{
 // 			destination_floor := rand.Intn(4)
 // 			select{
 // 			case taskc <- destination_floor:
-// 				fmt.Println("Destination floor: ", destination_floor)
 // 			default:
 // 			}
 // 		}
 
 // 	}
 // }
+
 
 
 

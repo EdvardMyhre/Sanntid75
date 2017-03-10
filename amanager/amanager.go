@@ -37,7 +37,8 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 //Functions
 
 func slice2tasks(slice [][]int) []types.Task{
-	var tasks [len(slice)]types.Task
+	l := len(slice)
+	tasks := make([]types.Task, l)
 	for i := 0; i < len(slice); i++{
 		tasks[i].Type = slice[i][0]
 		tasks[i].Floor = slice[i][1]
@@ -47,7 +48,8 @@ func slice2tasks(slice [][]int) []types.Task{
 }
 
 func tasks2slice(tasks []types.Task) [][]int{
-	var slice [len(tasks)][3]int
+	l = len(tasks)
+	slice := make([][]int, l, 3)
 	for i := 0; i < len(tasks); i++{
 		slice[i][0] = tasks[i].Type
 		slice[i][1] = tasks[i].Floor
@@ -56,4 +58,18 @@ func tasks2slice(tasks []types.Task) [][]int{
 	return slice
 }
 
-func getWeight(task types.Task, status types.Status)
+func addTask(tasks []types.Task, task types.Task, status types.Status) (weight int, queuePos int){
+	//task ligger i tasks fra før av kan jeg anta. Skal nå få en vekt på å utføre task.
+	weight := 0
+	direction := UP
+	if status.Prev_floor > status.Floor || status.Floor = NUMBER_OF_FLOORS-1{
+		direction = DOWN
+	}
+
+
+}
+
+const(
+	UP = 1
+	DOWN = 0
+)
