@@ -9,11 +9,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"sort"
-	"time"
+	//"sort"
+	"math/rand"
+	//"time"
 )
 
-func Network_start(network_to_distributing_state_machine chan structer.MainData) {
+func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan structer.MainData, n_to_a_tasks_manager chan structer.MainData,
+					distri_to_n chan structer.MainData, p_task_manager_to_n chan structer.MainData, a_task_manager_to_n chan structer.MainData) {
 
 	//------------------------ Kanaler mellom moduler -------------------------------------
 
@@ -26,14 +28,18 @@ func Network_start(network_to_distributing_state_machine chan structer.MainData)
 	//task_manager_to_network := make(chan structer.MainData)
 	//network_to_task_manager := make(chan structer.MainData)
 
+	var message_send structer.MainData
+
 	//-----------------------  Lager kanal som har oversikt over hvem som er i livet --------------------
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
 
 	//-----------------------  Lager kanaler for å sende og receive meldinger --------------------
-	message_send := make(chan structer.MainData)
-	message_received := make(chan structer.MainData)
+	message_sendCh := make(chan structer.MainData)
+	message_receivedCh := make(chan structer.MainData)
 
+
+//-----------------------  Finner lokal ip og deklarerer myBackupId --------------------
 	id := find_localip()
 	myBackupId := ""
 
@@ -42,80 +48,95 @@ func Network_start(network_to_distributing_state_machine chan structer.MainData)
 	go peers.Receiver(50018, peerUpdateCh)
 
 	//-----------------------  Sender og mottar fra broadcast --------------------
+	go bcast.Transmitter(40018, message_sendCh)
+	go bcast.Receiver(40018, message_receivedCh)
 
+	//-----------------------  Melding for å sjekke om man har en backup --------------------
 	/*go func() {
-		select {
-		case m := <-message_send:
-			switch m.Destination {
-			case "backup":
-				fmt.Println("kom in i case")
-				m.Destination = myBackupId
-				//message_send <- m
-				fmt.Println("kom ut av case:  ", m.Destination)
-			}
-		}
-		bcast.Transmitter(40018, message_send)
-	}()*/
-	go bcast.Transmitter(40018, message_send)
-	go bcast.Receiver(40018, message_received)
-
-	//-----------------------  Lager et objekt som sendes ut --------------------
-	go func() {
 		message := structer.MainData{}
 		message.Source = id
-		message.Destination = "backup"
-		message.Message_type = messageid.ID_MODULE_DISTRIBUTOR
-		row1 := []int{1, 2, 3, 4, 52}
-		row2 := []int{4, 5, 6, 564, 4}
+		message.Destination = "broadcast"
+		message.Message_type = messageid.ID_MSG_TYPE_MY_BACKUP
+		row1 := []int{}
+		row2 := []int{}
 		message.Data = append(message.Data, row1)
 		message.Data = append(message.Data, row2)
 
 		for {
-			var i int
-			i++
-			message_send <- message
+			message_sendCh <- message
 			time.Sleep(1 * time.Second)
+		}
+	}()*/
+	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
+	go func(){
+		for {
+			select{ 
+			case d := <-distri_to_n:
+				message_send = d
+
+			case p := <-p_task_manager_to_n:
+				message_send = p
+
+			case a := <-a_task_manager_to_n:
+				message_send = a
+			}
+			message_send.Source = id
+			message_sendCh <- message_send
 		}
 	}()
 
-	//-----------------------  Printer ut hva som kommer fra broadcast og hvem som er i livet --------------------
+
+
+
+
+
+	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
 	fmt.Println("Started")
-	for {
-		select {
-		case p := <-peerUpdateCh:
-			if myBackupId == "" {
-				myBackupId = find_backup(id, p)
-			}
-			fmt.Println("Min id er:       ", id)
-			fmt.Println("Min backupid er: ", myBackupId)
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  Backup:   %q\n", p.Backup)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
+	go func(){
+		for {
+			select {
+			case p := <-peerUpdateCh:
+				if myBackupId == "" {
+					myBackupId = find_backup(id, p)
+				}
+				//fmt.Println("Min id er:       ", id)
+				//fmt.Println("Min backupid er: ", myBackupId)
+				/*fmt.Printf("Peer update:\n")
+				fmt.Printf("  Peers:    %q\n", p.Peers)
+				fmt.Printf("  Backup:   %q\n", p.Backup)
+				fmt.Printf("  New:      %q\n", p.New)
+				fmt.Printf("  Lost:     %q\n", p.Lost)*/
 
-		case a := <-message_received:
-			//fmt.Println(a)
-			switch a.Message_type & 224 {
+			case a := <-message_receivedCh:
+				if a.Destination == id || a.Destination == "broadcast" {
+					switch a.Message_type & 224 {
+					case messageid.ID_MODULE_DISTRIBUTOR:
+						n_to_distri <- a
 
-			case messageid.ID_MODULE_DISTRIBUTOR:
-				//fmt.Println(a)
-				network_to_distributing_state_machine <- a
+					case messageid.ID_MODULE_TASK_MANAGER:
+						n_to_p_task_manager <- a
 
-			case messageid.ID_MODULE_TASK_MANAGER:
-				//network_to_task_manager <- a
-				fmt.Println("Sender til task_manager      ", a)
+					case messageid.ID_MODULE_ELEVATOR_CONTROLLER:
+						n_to_a_tasks_manager <- a
 
-			case messageid.ID_MODULE_ELEVATOR_CONTROLLER:
-				fmt.Println("Sender til elvator controller      ", a)
-				//network_to_assigned_tasks_manager <- a
+					case messageid.ID_MODULE_NETWORK:
+						backup(a, myBackupId, id, message_sendCh)
+						//fmt.Println("melding fra message_receivedCh: ", a)
+
+					}
+				}
 			}
 		}
-	}
+	}()
 }
 
+
+
+
+
+
 //--------------------- Finner din backup  -----------------------------
-func find_backup(id string, p peers.PeerUpdate) string {
+/*func find_backup(id string, p peers.PeerUpdate) string {
 	index := sort.SearchStrings(p.Peers, id)
 	myBackupId := ""
 	for i := range p.Backup {
@@ -125,7 +146,26 @@ func find_backup(id string, p peers.PeerUpdate) string {
 		}
 	}
 	return myBackupId
+}*/
+
+func find_backup(id string, p peers.PeerUpdate) string {
+	if len(p.Peers) > 1 {
+		for {
+			i := rand.Intn(len(p.Peers))
+			//fmt.Println(i)
+			myBackupId := p.Peers[i]
+			if myBackupId != id{
+				return myBackupId
+			}
+		}
+	}
+	return ""
 }
+
+
+
+
+
 
 //-----------------------  Finner lokalip --------------------
 func find_localip() string {
@@ -143,4 +183,23 @@ func find_localip() string {
 		id = fmt.Sprintf("%s-%d", localIP, os.Getpid())
 	}
 	return id
+}
+
+func backup(m structer.MainData, myBackupId string, id string, message_sendCh chan structer.MainData) {
+	if (m.Destination == "broadcast") && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE){
+		//fmt.Println("heieie")
+		if m.Source == myBackupId{
+		message := structer.MainData{}
+		message.Source = id
+		message.Destination = m.Source
+		message.Message_type = messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE
+		row1 := []int{}
+		row2 := []int{}
+		message.Data = append(message.Data, row1)
+		message.Data = append(message.Data, row2)
+		message_sendCh <- message	
+		fmt.Println("message:  ", message)
+		}
+	}
+
 }
