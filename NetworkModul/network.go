@@ -83,14 +83,16 @@ func Network_start(network_to_distributing_state_machine chan structer.MainData)
 	for {
 		select {
 		case p := <-peerUpdateCh:
-			myBackupId = find_backup(id, p)
+			if myBackupId == "" {
+				myBackupId = find_backup(id, p)
+			}
 			fmt.Println("Min id er:       ", id)
 			fmt.Println("Min backupid er: ", myBackupId)
-			//fmt.Printf("Peer update:\n")
-			//fmt.Printf("  Peers:    %q\n", p.Peers)
-			//fmt.Printf("  Backup:   %q\n", p.Backup)
-			//fmt.Printf("  New:      %q\n", p.New)
-			//fmt.Printf("  Lost:     %q\n", p.Lost)
+			fmt.Printf("Peer update:\n")
+			fmt.Printf("  Peers:    %q\n", p.Peers)
+			fmt.Printf("  Backup:   %q\n", p.Backup)
+			fmt.Printf("  New:      %q\n", p.New)
+			fmt.Printf("  Lost:     %q\n", p.Lost)
 
 		case a := <-message_received:
 			//fmt.Println(a)
