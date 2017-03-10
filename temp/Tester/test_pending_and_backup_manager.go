@@ -20,6 +20,7 @@ func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- 
 		random_command := rand.Intn(3)
 		message_output.Floor = random_number
 		message_output.Button_type = random_command
+		message_output.Add = 255
 		time.Sleep(2*time.Second)
 		send_chan <- message_output
 	}
