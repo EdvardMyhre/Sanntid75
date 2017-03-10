@@ -51,9 +51,10 @@ func Controller(statusc chan<- types.Status, taskc <-chan int){
 }
 
 
-func ButtonPoller(buttonc chan<- types.Button){
-	//Initialising variables
+func ButtonPoller(taskc chan<- types.Task){
+	//Initializing variables
 	button := types.Button{}
+	task := types.Task{}
 	var button_pushes []types.Button
 	var button_pushes_this_loop []types.Button
 
@@ -106,7 +107,9 @@ func ButtonPoller(buttonc chan<- types.Button){
 				if button_pushes_this_loop[i].Type == button_pushes[j].Type && button_pushes_this_loop[i].Floor == button_pushes[j].Floor{
 					if time.Since(button_pushes[j].Instant).Seconds() - time.Since(button_pushes_this_loop[i].Instant).Seconds() > 2{
 						button_pushes[j] = button_pushes_this_loop[i]
-						buttonc <- button_pushes_this_loop[i]
+						task.Type = button_pushes_this_loop[i].Type
+						task.Floor = button_pushes_this_loop[i].Floor
+						taskc <- task
 					}
 				}
 			}
@@ -133,7 +136,8 @@ func ButtonPoller(buttonc chan<- types.Button){
 
 //TEST CONTROLLER
 // func main() {
-
+	
+// 	driver.Init()
 // 	statusc := make(chan types.Status)
 // 	taskc := make(chan int)
 // 	go elevator.Controller(statusc, taskc)
@@ -159,14 +163,15 @@ func ButtonPoller(buttonc chan<- types.Button){
 
 
 
+
 //TEST BUTTONS
 // func main() {
 // 	driver.Init()
-// 	buttonc := make(chan types.Button)
-// 	go elevator.Buttons(buttonc)
+// 	taskc := make(chan types.Task)
+// 	go elevator.ButtonPoller(taskc)
 // 	for{
-// 		button := <- buttonc
-// 		fmt.Println("Type: ", button.Type, " Floor: ", button.Floor)
+// 		task := <- taskc
+// 		fmt.Println("Type: ", task.Type, " Floor: ", task.Floor)
 // 	}
 
 // }
