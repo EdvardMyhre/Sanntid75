@@ -1,6 +1,7 @@
 package amanager
 
-//import "../driver"
+import "../driver"
+
 //import "../elevator"
 import "../types"
 
@@ -13,21 +14,31 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 	//Initializing variables
 	var assigned_tasks []types.Task
+	var task_temp []types.Task
+	var data_temp [][]int
 	task_new := types.Task
 	task_current := types.Task
-	msg := types.MainData
-	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
+
+	elev_status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
+	weight := 255
+
+	msg_in := types.MainData
+	msg_out := types.MainData
 
 	//Boot routine
-	msg.Destination = "backup"
-	msg.Message_type = types.MESSAGE_TYPE_REQUEST_BACKUP
-	udp_tx_c <- msg
+	msg_out.Destination = "backup"
+	msg_out.Type = types.REQUEST_BACKUP
+	udp_tx_c <- msg_out
 	select {
-	case msg := <-udp_rx_c:
-		assigned_tasks = slice2tasks(msg.Data)
+	case msg_in := <-udp_rx_c:
+		assigned_tasks = slice2tasks(msg_in.Data)
 		fmt.Println("AMANAGER: Backup loaded")
 	case <-time.After(time.Second * 10):
 		fmt.Println("AMANAGER: No backup available")
+	}
+	l := len(assigned_tasks)
+	for i := 0; i < l; i++ {
+		driver.SetButtonLamp(assigned_tasks[i].Type, assigned_tasks[i].Floor, 1)
 	}
 
 	//HENDELSER:
@@ -50,24 +61,23 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				assigned_tasks = assigned_tasks[1:]
 
 				//Push backup
-				msg.Destination = "backup"
-				msg.Message_type = types.MESSAGE_TYPE_PUSH_BACKUP
-				msg.Data = tasks2slice(assigned_tasks)
+				msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
 				select {
-				case udp_tx_c <- msg:
+				case udp_tx_c <- msg_out:
 				case <-time.After(time.Second):
 					fmt.Println("AMANAGER: network not responding!")
 				}
 
 				//Update lights
-				msg.Destination = "broadcast"
-				msg.Message_type = types.MESSAGE_TYPE_SET_LIGHT
-				msg.Data = tasks2slice([]types.Task{current_task})
-				select {
-				case udp_tx_c <- msg:
-				case <-time.After(time.Second):
-					fmt.Println("AMANAGER: network not responding!")
+				if task_current.Type != 2 {
+					msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice([]types.Task{task_current})}
+					select {
+					case udp_tx_c <- msg_out:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: network not responding!")
+					}
 				}
+				driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
 
 				//Start on new task
 				if len(assigned_tasks > 0) {
@@ -83,21 +93,35 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 		default:
 		}
 
-		//Input from pmanager, i.e new task from pmanager (command from cab)
+		//Input from pmanager, i.e new task from pmanager, command from cab or timed out tasks!
 		select {
 		case task_new <- pmanager_task_c:
+			if task_new.Assigned != 0 {
+				fmt.Println("AMANAGER: been assigned an already assigned task!")
+			}
+			task_new.Assigned = 255
 			_, assigned_tasks = addTask(assigned_tasks, task_new, elev_status)
+
 			//Push backup
-			msg.Destination = "backup"
-			msg.Message_type = types.MESSAGE_TYPE_PUSH_BACKUP
-			msg.Data = tasks2slice(assigned_tasks)
+			msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
 			select {
-			case udp_tx_c <- msg:
+			case udp_tx_c <- msg_out:
 			case <-time.After(time.Second):
 				fmt.Println("AMANAGER: network not responding!")
 			}
+
+			//Update lights
+			if task_new.Type != 2 {
+				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice([]types.Task{task_new})}
+				select {
+				case udp_tx_c <- msg_out:
+				case <-time.After(time.Second):
+					fmt.Println("AMANAGER: network not responding!")
+				}
+			}
+			driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+
 			//Reply to pmanager
-			task_new.Assigned = 255
 			select {
 			case pmanager_status_c <- task_new:
 			case <-time.After(time.Second):
@@ -108,11 +132,140 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 		//Message from udp
 		select {
-		case msg <- udp_rx_c:
-			switch msg.Message_type {
-			case MESSAGE_TYPE_REQUEST_WEIGHT:
-			case MESSAGE_TYPE_DISTRIBUTE_ORDER:
-			case MESSAGE_TYPE_SET_LIGHT:
+		case msg_in <- udp_rx_c:
+			switch msg_in.Message_type {
+
+			//Weight request
+			case types.REQUEST_WEIGHT:
+				task_temp = slice2tasks(msg_in.Data)
+				if len(task_temp) > 0 {
+					task_new = task_temp[0]
+
+					//Send to pmanager
+					if task_new.Assigned != 0 {
+						fmt.Println("AMANAGER: weight request on assigned task!")
+					}
+					select {
+					case pmanager_status_c <- task_new:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: pmanager not responding!")
+					}
+
+					//Calculate weight
+					weight, _ = addTask(assigned_tasks, task_new, elev_status)
+
+					//Send weight to source
+					msg_out = types.MainData{Destination: msg_in.Source, Type: types.GIVE_WEIGHT}
+					data_temp = make([][]int, 1)
+					data_temp[0] = make([]int, 3)
+					data_temp[0][0] = weight
+					data_temp[0][1] = task_new.Type
+					data_temp[0][2] = task_new.Floor
+					msg_out.Data = data_temp
+					select {
+					case udp_tx_c <- msg_out:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: network not responding!")
+					}
+
+				} else {
+					fmt.Println("AMANAGER: could not deserialize task from udp!")
+				}
+
+			//New task assigned to this elevator
+			case types.DISTRIBUTE_ORDER:
+				task_temp = slice2tasks(msg_in.Data)
+				if len(task_temp) > 0 {
+					task_new = task_temp[0]
+					if task_new.Assigned != 0 {
+						fmt.Println("AMANAGER: been assigned an already assigned task!")
+					}
+					if task_new.Finished != 0 {
+						fmt.Println("AMANAGER: been assigned an already finished task!")
+					}
+					task_new.Assigned = 255
+					_, assigned_tasks = addTask(assigend_tasks, task_new, elev_status)
+
+					//Push backup
+					msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
+					select {
+					case udp_tx_c <- msg_out:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: network not responding!")
+					}
+
+					//Send to pmanager
+					select {
+					case pmanager_status_c <- task_new:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: pmanager not responding!")
+					}
+
+					//Confirm that the task is taken
+					msg_out = types.MainData{Destination: "broadcast", Type: types.TASK_ASSIGNED, Data: tasks2slice([]types.Task{task_new})}
+					select {
+					case udp_tx_c <- msg_out:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: network not responding!")
+					}
+
+					//Set local lights
+					driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+
+				} else {
+					fmt.Println("AMANAGER: could not deserialize task from udp!")
+				}
+
+			//Asked to set lights
+			case types.SET_LIGHT:
+				task_temp = slice2tasks(msg_in.Data)
+				if len(task_temp) > 0 {
+					task_new = task_temp[0]
+					if task_new.Assigned == 0 {
+						fmt.Println("AMANAGER: has been told to turn on light for unassigned task!")
+					}
+					if task_new.Type != 2 {
+						if task_new.Finished != 0 {
+							driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
+						} else {
+							driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+						}
+					}
+				} else {
+					fmt.Println("AMANAGER: could not deserialize task from udp!")
+				}
+
+			//A task has been assigned to another elevator, we inform pmanager and set lights
+			case types.TASK_ASSIGNED:
+				task_temp = slice2tasks(msg_in.Data)
+				if len(task_temp) > 0 {
+					task_new = task_temp[0]
+					if task_new.Assigned == 0 {
+						fmt.Println("AMANAGER: was told an unassigned task has been assigned!")
+					}
+
+					//Send to pmanager
+					select {
+					case pmanager_status_c <- task_new:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: pmanager not responding!")
+					}
+
+					//Update lights
+					if task_new.Type != 2 {
+						if task_new.Finished != 0 {
+							driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
+						} else {
+							driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+						}
+					}
+
+				} else {
+					fmt.Println("AMANAGER: could not deserialize task from udp!")
+				}
+
+			default:
+				fmt.Println("AMANAGER: message from udp unreconisible!")
 			}
 
 		default:
@@ -121,6 +274,13 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	} //end of inf loop
 }
 
+//
+//
+//
+//
+//
+//
+//
 //Functions
 func slice2tasks(slice [][]int) []types.Task {
 	l := len(slice)

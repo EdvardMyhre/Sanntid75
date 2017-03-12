@@ -24,8 +24,8 @@ type Status struct {
 }
 
 type MainData struct { // Dette som sendes mellom heisene og legges i backoup
-	Source       string
-	Destination  string
-	Message_type int
-	Data         [][]int
+	Source      string
+	Destination string
+	Type        int
+	Data        [][]int
 }
