@@ -272,14 +272,15 @@ func slice2tasks(slice [][]int) []types.Task {
 	for i := 0; i < len(slice); i++ {
 		tasks[i].Type = slice[i][0]
 		tasks[i].Floor = slice[i][1]
-		tasks[i].Add = slice[i][2]
+		tasks[i].Finished = slice[i][2]
+		tasks[i].Assigned = slice[i][3]
 	}
 	return tasks
 }
 
 func tasks2slice(tasks []types.Task) [][]int {
 	l := len(tasks)
-	w := 3
+	w := 4
 	slice := make([][]int, l)
 	for i := 0; i < l; i++ {
 		slice[i] = make([]int, w)
@@ -288,7 +289,8 @@ func tasks2slice(tasks []types.Task) [][]int {
 	for i := 0; i < len(tasks); i++ {
 		slice[i][0] = tasks[i].Type
 		slice[i][1] = tasks[i].Floor
-		slice[i][2] = tasks[i].Add
+		slice[i][2] = tasks[i].Finished
+		slice[i][3] = tasks[i].Assigned
 	}
 	return slice
 }
