@@ -7,11 +7,15 @@ import "../types"
 import "fmt"
 import "time"
 
-func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- int, statusc <-chan types.Task, taskc chan<- types.Task, udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData) {
+func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- int,
+	pmanager_task_c <-chan types.Task, pmanager_status_c chan<- types.Task,
+	udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData) {
 
 	//Initializing variables
 	var assigned_tasks []types.Task
-	var msg types.MainData
+	task := types.Task
+	msg := types.MainData
+	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 
 	//Boot routine
 	msg.Destination = "backup"
@@ -26,11 +30,31 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	}
 
 	//HENDELSER:
-	//Får task fra pmanager
+	//Får task fra pmanager, format: types.Task og ser bort ifra Unfinished
 	//Får task fra udp
 	//Får spm om vekt fra udp
 	//Får status fra controller
-	//
+	//Få "skru på lys" av andre
+	//case <-time.After(time.Second):
+
+	for {
+		//Får status fra controller
+		select {
+		case elev_status <- elev_status_c:
+			if elev_status.Finished != 0 {
+				//Oppdater lys og send ny task
+
+			}
+		default:
+		}
+
+		//Får task fra pmanager, format: types.Task og ser bort ifra task.Unfinished
+		select {
+		case task <- pmanager_task_c:
+
+		default:
+		}
+	}
 
 }
 

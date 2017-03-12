@@ -64,7 +64,7 @@ const (
 	MESSAGE_TYPE_GIVE_WEIGHT = (ID_MODULE_DISTRIBUTOR | 18) //xxx 10010
 
 	//Message types used by assigned tasks manager
-	MESSAGE_TYPE_REQUEST_BACKUP = (ID_MODULE_AMANAGER | 18)
+	MESSAGE_TYPE_REQUEST_BACKUP = (ID_MODULE_AMANAGER | 18) //xxx 10010
 
 	//Message types used by network module
 )
