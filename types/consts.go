@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 const (
 	ElevatorType = 0 //1 is simulation, 0 is comedi
 )
@@ -32,7 +34,9 @@ const (
 )
 
 const (
-	TIMEOUT_MESSAGE_RESPONSE = 2.5
+	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 2*time.Second
+	TIMEOUT_MESSAGE_SEND_WAITTIME = 1*time.Second
+	TIMEOUT_PENDINGLIST_ORDER = 5*time.Second
 )
 
 const (

@@ -45,3 +45,18 @@ func Test_pendingandBackup_manager_assignedSimulator(send_chan chan<- types.Task
 	
 	
 }
+
+func Test_pendingandBackup_manager_distributorSimulator(send_chan chan<- types.Task, rec_chan <-chan types.Task){
+	//Send periodic status updates
+	var chan_message types.Task
+	for{
+		random_distributorstate := rand.Intn(2)
+		chan_message.Finished = random_distributorstate
+		time.Sleep(1*time.Second)
+		send_chan <- chan_message
+		
+	}
+	
+	
+	
+}

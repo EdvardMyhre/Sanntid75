@@ -18,31 +18,40 @@ func main(){
 	//With distributor
 	channel_distributor_to_pending_tasks_manager := make(chan types.Task)
 	channel_pending_tasks_manager_to_distributor := make(chan types.Task)
-	//With elevator handler
+	//With assigned tasks manager
 	channel_assigned_tasks_manager_to_pending_tasks_manager := make(chan types.Task)
 	channel_pending_tasks_manager_to_assigned_tasks_manager := make(chan types.Task)
-	//With Network Module
-	channel_network_module_to_pending_tasks_manager := make(chan types.MainData)
-	channel_pending_tasks_manager_to_network_module := make(chan types.MainData)
+	//With backup manager
+	channel_backup_manager_to_pending_manager := make(chan types.MainData)
 	
+	//Backup manager communication with network module
+	channel_network_module_to_backup_manager := make(chan types.MainData)
+	channel_backup_manager_to_network_module := make(chan types.MainData)
+	
+	
+	//Module go routines
 	go Pending_task_manager(	channel_button_intermediary_to_pending_tasks_manager,
 								channel_distributor_to_pending_tasks_manager,			channel_pending_tasks_manager_to_distributor,
 								channel_assigned_tasks_manager_to_pending_tasks_manager,		channel_pending_tasks_manager_to_assigned_tasks_manager,
-								channel_network_module_to_pending_tasks_manager,		channel_pending_tasks_manager_to_network_module)
-
+								channel_backup_manager_to_pending_manager)
+	
+	go Backup_manager(			channel_network_module_to_backup_manager,	channel_backup_manager_to_network_module,
+																			channel_backup_manager_to_pending_manager)
+	
+	//Test functions, Can be removed when combining
 	go Tester.Test_pendingAndBackup_manager_buttonIntermediarySimulator(channel_button_intermediary_to_pending_tasks_manager)
 	go Tester.Test_pendingandBackup_manager_assignedSimulator(channel_assigned_tasks_manager_to_pending_tasks_manager, channel_pending_tasks_manager_to_assigned_tasks_manager)
+	go Tester.Test_pendingandBackup_manager_distributorSimulator(channel_distributor_to_pending_tasks_manager, channel_pending_tasks_manager_to_distributor)
+	
+	
 	fmt.Println("Main function for Pending tasks manager. Connectivity test")
 	for{}
 
 }
 
 
-//const(
-//	FLOORS = 4
-//)
 
-type pendingListFloor struct {
+type struct_pendingListFloor struct {
 	upOrder					uint8
 	timestamp_upOrder		time.Time
 	downOrder				uint8
@@ -51,12 +60,20 @@ type pendingListFloor struct {
 	timestamp_internalOrder time.Time
 	
 }
-	var pendingList [types.NUMBER_OF_FLOORS+1] pendingListFloor
+	var pendingList [types.NUMBER_OF_FLOORS+1] struct_pendingListFloor
+	
+	
+type struct_distributor_state struct {
+	busy					uint8
+	timestamp_busyTime		time.Time
+}
+	var distributor_state struct_distributor_state
 
+	
 func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button,
 							channel_from_distributor 			<-chan types.Task, 						channel_to_distributor 				chan<- types.Task,
 							channel_from_assigned_tasks_manager <-chan types.Task	,					channel_to_assigned_tasks_manager 	chan<- types.Task,
-							channel_from_network 				<-chan types.MainData,					channel_to_network 					chan<- types.MainData) {
+							channel_from_backup_manager			<-chan types.MainData,																			) {
 	fmt.Println("Pending Task Manager Go Routine startup")
 	
 	//Set up Pending Tasks Matrix
@@ -71,14 +88,19 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 		pendingList[i].timestamp_downOrder = time.Time{}
 		pendingList[i].timestamp_internalOrder = time.Time{}
 	}
+	distributor_state.busy = 0
+	distributor_state.timestamp_busyTime = time.Time{}
+	
+	//Variable declarations
+	assigned_order_pendingList_startingIndex := 1
 	
 	fmt.Println("pendingList after being zeroed out: ", pendingList)
 	
 	for{
-		//Behavior with button intermediary
+		//Receive Behavior with button intermediary
 		select{
 			case message_buttonOrder := <- channel_from_button_intermediary:
-				fmt.Println("Received new Order: ",message_buttonOrder)
+				//fmt.Println("Received new Order: ",message_buttonOrder)
 				var buttontoTaskConvert types.Task
 				buttontoTaskConvert.Floor = message_buttonOrder.Floor
 				buttontoTaskConvert.Type = message_buttonOrder.Type
@@ -90,10 +112,10 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 				
 		}
 			
-		//Receive behavior with assigned tasks manager
+		//Receive Behavior with assigned tasks manager
 		select{
 			case message_buttonOrder := <- channel_from_assigned_tasks_manager:
-				fmt.Println("Received assign Order: ",message_buttonOrder)
+				//fmt.Println("Received assign Order: ",message_buttonOrder)
 				adjust_pendinglist(message_buttonOrder, true)
 					
 			default:
@@ -102,12 +124,94 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 			
 			
 		//Receive behavior with task distributor
-			//Controls variable which tells pending manager if it's supposed to give distributor new task
+			//Controls variable which tells pending manager if it's supposed to give distributor new task or not (if distributor is busy or not)
+		select{
+			case message_distributorStatus := <- channel_from_distributor:
+				if message_distributorStatus.Finished == 0 {
+					//Distributor is busy
+					distributor_state.busy = 255
+					distributor_state.timestamp_busyTime = time.Now()
+					//fmt.Println("Received distributor state BUSY :" , distributor_state, "Finished value:", message_distributorStatus.Finished)
+				} else if message_distributorStatus.Finished != 0{
+					//Distributor finished task, not 
+					distributor_state.busy = 0
+					distributor_state.timestamp_busyTime = time.Time{}
+					//fmt.Println("Received distributor state READY :" , distributor_state, "Finished value:", message_distributorStatus.Finished)
+				}
+			default:
+				//Do nothing
+		}
 			
 			
 			
 		//Receive behavior with backup-submodule
 			//If receive anything, then merge lists (own routine for saving)
+		select{
+			case message_backup := <- channel_from_backup_manager:
+				fmt.Println("Received message from backup manager. Must merge into pending list, and add timestamp to tasks", message_backup)
+				fmt.Println("")
+				fmt.Println("")
+				fmt.Println("")
+				//Pending only receives something here if the computer has lost connection with an elevator who used it as backup
+				//Loop through it and add all tasks in the backup matrix to pending matrix, with timestamp.
+			default:
+		}
+		
+		
+		//Send behavior with assigned task manager. Loop through and look for either an internal order, or a timed out order.
+		assigned_newOrderBool := false
+		assigned_newOrderType := 0
+		//assigned_order_pendingList_startingIndex := 1		//This variable is set outside for loop
+		
+		for i := assigned_order_pendingList_startingIndex ; i <len(pendingList) ; i++ {
+			//Check for internal order
+			if (pendingList[i].internalOrder != 0) && (time.Time.IsZero(pendingList[i].timestamp_internalOrder) || (time.Since(pendingList[i].timestamp_internalOrder) > types.TIMEOUT_PENDINGLIST_ORDER)){
+				
+				assigned_newOrderBool = true
+				assigned_newOrderType = types.BTN_TYPE_COMMAND
+				assigned_order_pendingList_startingIndex = i
+				break
+			} else if (pendingList[i].upOrder != 0) && (time.Since(pendingList[i].timestamp_upOrder) > types.TIMEOUT_PENDINGLIST_ORDER){
+				assigned_newOrderBool = true
+				assigned_newOrderType = types.BTN_TYPE_UP
+				assigned_order_pendingList_startingIndex = i
+				break
+			} else if (pendingList[i].downOrder != 0) && (time.Since(pendingList[i].timestamp_downOrder) > types.TIMEOUT_PENDINGLIST_ORDER) {
+				assigned_newOrderBool = true
+				assigned_newOrderType = types.BTN_TYPE_DOWN
+				assigned_order_pendingList_startingIndex = i
+			}
+			//Check for up order
+			
+			//Check for down order
+		}
+		
+		//Do action if new order was found
+		if assigned_newOrderBool {
+			var sendOrder types.Task
+			sendOrder.Floor = assigned_order_pendingList_startingIndex
+			sendOrder.Type = assigned_newOrderType
+			select{
+				case channel_to_assigned_tasks_manager <- sendOrder:
+					fmt.Println("                                                    SENT new order to assigned tasks manager: ",sendOrder)
+				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+					fmt.Println("                                                    SENT new order to assigned tasks manager FAILED DUE to TIMEOUT")
+			}
+			
+			
+			
+			if assigned_newOrderType == types.BTN_TYPE_COMMAND {
+				pendingList[assigned_order_pendingList_startingIndex].timestamp_internalOrder = time.Now()
+			} else if assigned_newOrderType == types.BTN_TYPE_UP {
+				pendingList[assigned_order_pendingList_startingIndex].timestamp_upOrder = time.Now()
+			} else if assigned_newOrderType == types.BTN_TYPE_DOWN {
+				pendingList[assigned_order_pendingList_startingIndex].timestamp_downOrder = time.Now()
+			}
+			
+			
+		} else {
+			assigned_order_pendingList_startingIndex = 1
+		}
 		
 		
 	}
@@ -129,13 +233,22 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 }
 
 
+func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_network 			chan<- types.MainData,
+																			channel_to_pending_manager 	chan<- types.MainData){
+	var message_maindata types.MainData
+	for{
+		time.Sleep(15*time.Second)
+		channel_to_pending_manager <- message_maindata
+	}
+																				
+}
 func adjust_pendinglist(adjust_pendinglist_message types.Task, adjust_timestamp bool){
 	if adjust_pendinglist_message.Floor >= len(pendingList) || adjust_pendinglist_message.Floor <= 0{
 		//Illegal floor value
 		fmt.Println("Pending adjustment: illegal FLOOR value")
 		
 	} else if adjust_pendinglist_message.Assigned == 0 {
-		//Un-assigned order seen, add to pending list
+		//Un-assigned order seen, add to pending list. Set timestamp if adjust_timestamp is true
 		if adjust_pendinglist_message.Type == types.BTN_TYPE_UP {
 			fmt.Println("Pending adjustment: ADD UP ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].upOrder = 255
@@ -152,7 +265,7 @@ func adjust_pendinglist(adjust_pendinglist_message types.Task, adjust_timestamp 
 							
 							
 	} else if adjust_pendinglist_message.Assigned != 0 {
-		//Order has been assigned. No longer pending. Remove from pending list
+		//Order has been assigned. No longer pending. Remove from pending list. Remove timestamp if adjust_timestamp is true
 		if adjust_pendinglist_message.Type == types.BTN_TYPE_UP {
 			fmt.Println("Pending adjustment: REMOVE UP ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].upOrder = 0
