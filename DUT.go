@@ -1,49 +1,47 @@
 package main
 
 //import "./driver"
-// import "./types"
+import "./types"
+
 //import "./elevator"
+import "./amanager"
 
 import "fmt"
+
 //import "time"
 //import "math/rand"
 
-
-
-//TEST CONTROLLER
 func main() {
-	var a [10][10]
+	var tasks []types.Task
+	weight := 0
 
-	for i := 0; i < 10; i++{
-		a[i] = append(a[i], 0)
-		a[i] = append(a[i], 1)
-		a[i] = append(a[i], 2)
+	status := types.Status{Destination_floor: 3, Floor: 1, Prev_floor: 0, Finished: 0, Between_floors: 1}
+
+	task1 := types.Task{Type: 0, Floor: 0, Add: 255}
+	task2 := types.Task{Type: 0, Floor: 1, Add: 255}
+	task3 := types.Task{Type: 0, Floor: 2, Add: 255}
+	task4 := types.Task{Type: 1, Floor: 3, Add: 255}
+	task5 := types.Task{Type: 1, Floor: 2, Add: 255}
+	task6 := types.Task{Type: 1, Floor: 1, Add: 255}
+
+	weight, tasks = amanager.AddTask(tasks, task1, status)
+	fmt.Println("Weight:", weight)
+	weight, _ = amanager.AddTask(tasks, task2, status)
+	fmt.Println("Weight:", weight)
+	weight, _ = amanager.AddTask(tasks, task3, status)
+	fmt.Println("Weight:", weight)
+	weight, tasks = amanager.AddTask(tasks, task4, status)
+	fmt.Println("Weight:", weight)
+	weight, _ = amanager.AddTask(tasks, task5, status)
+	fmt.Println("Weight:", weight)
+	weight, _ = amanager.AddTask(tasks, task6, status)
+
+	fmt.Println("Tasks:")
+	for i := 0; i < len(tasks); i++ {
+		fmt.Println(tasks[i])
 	}
+	fmt.Println("Weight:", weight)
 
-	fmt.Println(len(a))
-	fmt.Println(lengde(a))
-
-	// var a [][]int
-	// var b []types.Task
-	// c := types.Task{Type: 1, Floor: 1, Add: 255}
-	// b = append(b, c)
-	// b = append(b, c)
-	// fmt.Println(b)
-	// fmt.Println(len(b))
-	// //a = tasks2slice(b)
-	// //fmt.Println(a)
+	deleteTasks(tasks)
+	fmt.Println(tasks)
 }
-
-func lengde(a [][]int) int{
-	return len(a)
-}
-
-// func tasks2slice(tasks []types.Task) [][]int{
-// 	var slice [len(tasks)][3]int
-// 	for i := 0; i < len(tasks); i++{
-// 		slice[i][0] = tasks[i].Type
-// 		slice[i][1] = tasks[i].Floor
-// 		slice[i][2] = tasks[i].Add
-// 	}
-// 	return slice
-// }
