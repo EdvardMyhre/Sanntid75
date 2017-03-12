@@ -99,10 +99,12 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan Network.Butt
 			
 			
 		//Receive behavior with task distributor
+			//Controls variable which tells pending manager if it's supposed to give distributor new task
 			
 			
 			
 		//Receive behavior with backup-submodule
+			//If receive anything, then merge lists (own routine for saving)
 		
 		
 	}
