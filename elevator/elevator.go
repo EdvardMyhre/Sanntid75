@@ -13,10 +13,8 @@ func Controller(statusc chan<- types.Status, taskc <-chan int) {
 	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 	floor_signal := 0
 	driver.SetFloorIndicator(0)
-	select {
-	case statusc <- status:
-	case <-time.After(time.Second * 20):
-	}
+	case statusc <- status
+
 
 	for {
 		floor_signal = driver.GetFloorSensorSignal()
@@ -62,7 +60,8 @@ func ButtonPoller(taskc chan<- types.Task) {
 	//Initializing variables
 	button := types.Button{}
 	task := types.Task{}
-	task.Unfinished = 255
+	task.Finished = 0
+	task.Assigned = 0
 	var button_pushes []types.Button
 	var button_pushes_this_loop []types.Button
 

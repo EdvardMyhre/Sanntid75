@@ -3,9 +3,10 @@ package types
 import "time"
 
 type Task struct {
-	Type       int
-	Floor      int
-	Unfinished int
+	Type     int
+	Floor    int
+	Finished int
+	Assigned int
 }
 
 type Button struct {

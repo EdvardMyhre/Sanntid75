@@ -13,7 +13,8 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 	//Initializing variables
 	var assigned_tasks []types.Task
-	task := types.Task
+	task_new := types.Task
+	task_current := types.Task
 	msg := types.MainData
 	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 
@@ -30,32 +31,88 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	}
 
 	//HENDELSER:
-	//Får task fra pmanager, format: types.Task og ser bort ifra Unfinished
+	//3 input: elev, pmanager eller udp. Henholdsvis 1, 1 og 3 hendelser ved hver input
+
+	//Får task fra pmanager - OK
 	//Får task fra udp
 	//Får spm om vekt fra udp
-	//Får status fra controller
+	//Får status fra controller - OK
 	//Få "skru på lys" av andre
-	//case <-time.After(time.Second):
 
 	for {
-		//Får status fra controller
+		//Input from controller, i.e. new status from controller
 		select {
 		case elev_status <- elev_status_c:
-			if elev_status.Finished != 0 {
-				//Oppdater lys og send ny task
+			if elev_status.Finished != 0 && elev_status.Destination_floor == task_current.Floor {
+
+				//Update assigned tasks
+				task_current.Finished = 255
+				assigned_tasks = assigned_tasks[1:]
+
+				//Push backup
+				msg.Destination = "backup"
+				msg.Message_type = types.MESSAGE_TYPE_PUSH_BACKUP
+				msg.Data = tasks2slice(assigned_tasks)
+				select {
+				case udp_tx_c <- msg:
+				case <-time.After(time.Second):
+					fmt.Println("AMANAGER: network not responding!")
+				}
+
+				//Update lights
+				msg.Destination = "broadcast"
+				msg.Message_type = types.MESSAGE_TYPE_SET_LIGHT
+				msg.Data = tasks2slice([]types.Task{current_task})
+				select {
+				case udp_tx_c <- msg:
+				case <-time.After(time.Second):
+					fmt.Println("AMANAGER: network not responding!")
+				}
+
+				//Start on new task
+				if len(assigned_tasks > 0) {
+					task_current = assigned_tasks[0]
+					select {
+					case elev_task_c <- task_current:
+					case <-time.After(time.Second):
+						fmt.Println("AMANAGER: elevator.Controller not responding! Task is lost")
+					}
+				}
 
 			}
 		default:
 		}
 
-		//Får task fra pmanager, format: types.Task og ser bort ifra task.Unfinished
+		//Input from pmanager, i.e new task from pmanager (command from cab)
 		select {
-		case task <- pmanager_task_c:
-
+		case task_new <- pmanager_task_c:
+			_, assigned_tasks = addTask(assigned_tasks, task_new, elev_status)
+			//Push backup
+			msg.Destination = "backup"
+			msg.Message_type = types.MESSAGE_TYPE_PUSH_BACKUP
+			msg.Data = tasks2slice(assigned_tasks)
+			select {
+			case udp_tx_c <- msg:
+			case <-time.After(time.Second):
+				fmt.Println("AMANAGER: network not responding!")
+			}
+			//Reply to pmanager
+			task_new.Assigned = 255
+			select {
+			case pmanager_status_c <- task_new:
+			case <-time.After(time.Second):
+				fmt.Println("AMANAGER: pmanager not responding!")
+			}
 		default:
 		}
-	}
 
+		//Får task fra udp
+		select {
+		case msg <- udp_rx_c:
+
+		}
+
+	} //end of inf loop
 }
 
 //Functions
