@@ -3,24 +3,23 @@ package Tester
 import (
 	"fmt"
 	"time"
-	"../../Network"
-	//"../../types"
+	//"../../Network"
+	"../../types"
 	"math/rand"
 )
 
 
 
-func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- Network.Button){
+func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- types.Button){
 	fmt.Println("Simulator Running: Button Intermediary for Pending Tasks and Backup manager")
 	
-	var message_output Network.Button
+	var message_output types.Button
 	
 	for{
 		random_number := rand.Intn(5)
 		random_command := rand.Intn(3)
 		message_output.Floor = random_number
-		message_output.Button_type = random_command
-		message_output.Add = 255
+		message_output.Type = random_command
 		time.Sleep(2*time.Second)
 		send_chan <- message_output
 	}
@@ -29,17 +28,17 @@ func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- 
 }
 
 
-func Test_pendingandBackup_manager_assignedSimulator(send_chan chan<- Network.Button, rec_chan <-chan Network.Button){
+func Test_pendingandBackup_manager_assignedSimulator(send_chan chan<- types.Task, rec_chan <-chan types.Task){
 	//Send add/remove input to pending tasks manager
-	var chan_message Network.Button
+	var chan_message types.Task
 	
 	for{
 		random_number := rand.Intn(5)
 		random_command := rand.Intn(3)
 		random_addremove := rand.Intn(2)
 		chan_message.Floor = random_number
-		chan_message.Button_type = random_command
-		chan_message.Add = random_addremove
+		chan_message.Type = random_command
+		chan_message.Assigned = random_addremove
 		time.Sleep(4*time.Second)
 		send_chan <- chan_message
 	}

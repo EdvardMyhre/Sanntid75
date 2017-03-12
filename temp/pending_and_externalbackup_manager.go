@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 	"./Tester"
-	"../Network"
 	"../types"
 )
 
@@ -15,16 +14,16 @@ func main(){
 	
 	//PENDING TASK MANAGER CHANNELS:
 	//With button_intermediary
-	channel_button_intermediary_to_pending_tasks_manager := make(chan Network.Button)
+	channel_button_intermediary_to_pending_tasks_manager := make(chan types.Button)
 	//With distributor
-	channel_distributor_to_pending_tasks_manager := make(chan Network.Button)
-	channel_pending_tasks_manager_to_distributor := make(chan Network.Button)
+	channel_distributor_to_pending_tasks_manager := make(chan types.Task)
+	channel_pending_tasks_manager_to_distributor := make(chan types.Task)
 	//With elevator handler
-	channel_assigned_tasks_manager_to_pending_tasks_manager := make(chan Network.Button)
-	channel_pending_tasks_manager_to_assigned_tasks_manager := make(chan Network.Button)
+	channel_assigned_tasks_manager_to_pending_tasks_manager := make(chan types.Task)
+	channel_pending_tasks_manager_to_assigned_tasks_manager := make(chan types.Task)
 	//With Network Module
-	channel_network_module_to_pending_tasks_manager := make(chan Network.MainData)
-	channel_pending_tasks_manager_to_network_module := make(chan Network.MainData)
+	channel_network_module_to_pending_tasks_manager := make(chan types.MainData)
+	channel_pending_tasks_manager_to_network_module := make(chan types.MainData)
 	
 	go Pending_task_manager(	channel_button_intermediary_to_pending_tasks_manager,
 								channel_distributor_to_pending_tasks_manager,			channel_pending_tasks_manager_to_distributor,
@@ -39,9 +38,9 @@ func main(){
 }
 
 
-const(
-	FLOORS = 4
-)
+//const(
+//	FLOORS = 4
+//)
 
 type pendingListFloor struct {
 	upOrder					uint8
@@ -52,18 +51,18 @@ type pendingListFloor struct {
 	timestamp_internalOrder time.Time
 	
 }
-	var pendingList [FLOORS+1] pendingListFloor
+	var pendingList [types.NUMBER_OF_FLOORS+1] pendingListFloor
 
-func Pending_task_manager(	channel_from_button_intermediary 	<-chan Network.Button,
-							channel_from_distributor 			<-chan Network.Button, 					channel_to_distributor 				chan<- Network.Button,
-							channel_from_assigned_tasks_manager <-chan Network.Button,					channel_to_assigned_tasks_manager 	chan<- Network.Button,
-							channel_from_network 				<-chan Network.MainData,				channel_to_network 					chan<- Network.MainData) {
+func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button,
+							channel_from_distributor 			<-chan types.Task, 						channel_to_distributor 				chan<- types.Task,
+							channel_from_assigned_tasks_manager <-chan types.Task	,					channel_to_assigned_tasks_manager 	chan<- types.Task,
+							channel_from_network 				<-chan types.MainData,					channel_to_network 					chan<- types.MainData) {
 	fmt.Println("Pending Task Manager Go Routine startup")
 	
 	//Set up Pending Tasks Matrix
 
 	//Zero out values just for added safety (Go should have done this automatically when initialized)
-	for i := 0 ; i <=FLOORS ; i++{
+	for i := 0 ; i <len(pendingList) ; i++{
 		pendingList[i].upOrder = 0
 		pendingList[i].downOrder = 0
 		pendingList[i].internalOrder = 0
@@ -80,7 +79,11 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan Network.Butt
 		select{
 			case message_buttonOrder := <- channel_from_button_intermediary:
 				fmt.Println("Received new Order: ",message_buttonOrder)
-				adjust_pendinglist(message_buttonOrder, false)
+				var buttontoTaskConvert types.Task
+				buttontoTaskConvert.Floor = message_buttonOrder.Floor
+				buttontoTaskConvert.Type = message_buttonOrder.Type
+				buttontoTaskConvert.Assigned = 0
+				adjust_pendinglist(buttontoTaskConvert, false)
 				
 			default:
 				//Do nothing
@@ -126,39 +129,39 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan Network.Butt
 }
 
 
-func adjust_pendinglist(adjust_pendinglist_message Network.Button, adjust_timestamp bool){
+func adjust_pendinglist(adjust_pendinglist_message types.Task, adjust_timestamp bool){
 	if adjust_pendinglist_message.Floor >= len(pendingList) || adjust_pendinglist_message.Floor <= 0{
 		//Illegal floor value
 		fmt.Println("Pending adjustment: illegal FLOOR value")
 		
-	} else if adjust_pendinglist_message.Add != 0 {
-		//Add order to pending
-		if adjust_pendinglist_message.Button_type == types.BTN_TYPE_UP {
+	} else if adjust_pendinglist_message.Assigned == 0 {
+		//Un-assigned order seen, add to pending list
+		if adjust_pendinglist_message.Type == types.BTN_TYPE_UP {
 			fmt.Println("Pending adjustment: ADD UP ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].upOrder = 255
 			if adjust_timestamp { pendingList[adjust_pendinglist_message.Floor].timestamp_upOrder = time.Now() }
-		} else if adjust_pendinglist_message.Button_type == types.BTN_TYPE_DOWN {
+		} else if adjust_pendinglist_message.Type == types.BTN_TYPE_DOWN {
 			fmt.Println("Pending adjustment: ADD DOWN ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].downOrder = 255
 			if adjust_timestamp { pendingList[adjust_pendinglist_message.Floor].timestamp_downOrder = time.Now() }
-		} else if adjust_pendinglist_message.Button_type == types.BTN_TYPE_COMMAND {
+		} else if adjust_pendinglist_message.Type == types.BTN_TYPE_COMMAND {
 			fmt.Println("Pending adjustment: ADD INTERNAL ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].internalOrder = 255
 			if adjust_timestamp { pendingList[adjust_pendinglist_message.Floor].timestamp_internalOrder = time.Now() }
 		}
 							
 							
-	} else if adjust_pendinglist_message.Add == 0 {
-		//Remove order from pending
-		if adjust_pendinglist_message.Button_type == types.BTN_TYPE_UP {
+	} else if adjust_pendinglist_message.Assigned != 0 {
+		//Order has been assigned. No longer pending. Remove from pending list
+		if adjust_pendinglist_message.Type == types.BTN_TYPE_UP {
 			fmt.Println("Pending adjustment: REMOVE UP ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].upOrder = 0
 			if adjust_timestamp { pendingList[adjust_pendinglist_message.Floor].timestamp_upOrder = time.Time{} }
-		} else if adjust_pendinglist_message.Button_type == types.BTN_TYPE_DOWN {
+		} else if adjust_pendinglist_message.Type == types.BTN_TYPE_DOWN {
 			fmt.Println("Pending adjustment: REMOVE DOWN ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].downOrder = 0
 			if adjust_timestamp { pendingList[adjust_pendinglist_message.Floor].timestamp_downOrder = time.Time{} }
-		} else if adjust_pendinglist_message.Button_type == types.BTN_TYPE_COMMAND {
+		} else if adjust_pendinglist_message.Type == types.BTN_TYPE_COMMAND {
 			fmt.Println("Pending adjustment: REMOVE INTERNAL ", adjust_pendinglist_message.Floor)
 			pendingList[adjust_pendinglist_message.Floor].internalOrder = 0
 			if adjust_timestamp { pendingList[adjust_pendinglist_message.Floor].timestamp_internalOrder = time.Time{} }

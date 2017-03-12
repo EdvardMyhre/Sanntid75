@@ -15,13 +15,13 @@ func main(){
 	channel_task_manager_to_distributor := make(chan Network.InternalMessage)
 	channel_distributor_to_task_manager := make(chan Network.InternalMessage)
 	
-	go task_distributor(channel_distributor_to_task_manager, channel_task_manager_to_distributor,
-						channel_distributor_to_network, channel_network_to_distributor)
+	//go task_distributor(channel_distributor_to_task_manager, channel_task_manager_to_distributor,
+	//					channel_distributor_to_network, channel_network_to_distributor)
 						
 	
-	go Tester.Test_distributor_networkEmulator(channel_network_to_distributor, channel_distributor_to_network)
+	//go Tester.Test_distributor_networkEmulator(channel_network_to_distributor, channel_distributor_to_network)
 	
-	go Tester.Test_distributor_taskmanagerEmulator(channel_task_manager_to_distributor, channel_distributor_to_task_manager)
+	//go Tester.Test_distributor_taskmanagerEmulator(channel_task_manager_to_distributor, channel_distributor_to_task_manager)
 	
 	//forever loop so the main function does not terminate
 	for{}
