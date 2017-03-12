@@ -34,9 +34,9 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	//3 input: elev, pmanager eller udp. Henholdsvis 1, 1 og 3 hendelser ved hver input
 
 	//Får task fra pmanager - OK
-	//Får task fra udp
-	//Får spm om vekt fra udp
 	//Får status fra controller - OK
+	//Får tildelt task på udp
+	//Får spm om vekt fra udp
 	//Få "skru på lys" av andre
 
 	for {
@@ -106,10 +106,16 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 		default:
 		}
 
-		//Får task fra udp
+		//Message from udp
 		select {
 		case msg <- udp_rx_c:
+			switch msg.Message_type {
+			case MESSAGE_TYPE_REQUEST_WEIGHT:
+			case MESSAGE_TYPE_DISTRIBUTE_ORDER:
+			case MESSAGE_TYPE_SET_LIGHT:
+			}
 
+		default:
 		}
 
 	} //end of inf loop
