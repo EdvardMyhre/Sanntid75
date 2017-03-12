@@ -41,15 +41,6 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 		driver.SetButtonLamp(assigned_tasks[i].Type, assigned_tasks[i].Floor, 1)
 	}
 
-	//HENDELSER:
-	//3 input: elev, pmanager eller udp. Henholdsvis 1, 1 og 3 hendelser ved hver input
-
-	//Får task fra pmanager - OK
-	//Får status fra controller - OK
-	//Får tildelt task på udp
-	//Får spm om vekt fra udp
-	//Få "skru på lys" av andre
-
 	for {
 		//Input from controller, i.e. new status from controller
 		select {
@@ -274,13 +265,6 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	} //end of inf loop
 }
 
-//
-//
-//
-//
-//
-//
-//
 //Functions
 func slice2tasks(slice [][]int) []types.Task {
 	l := len(slice)
@@ -332,9 +316,6 @@ func addTask(tasks []types.Task, task types.Task, status types.Status) (int, []t
 		tasks = append(tasks, task)
 		queuePos = len(tasks)
 	}
-
-	fmt.Println("queuePos:", queuePos)
-	fmt.Println("distance:", distance)
 	weight = distance + (queuePos-1)*posWeight
 
 	return weight, tasks
