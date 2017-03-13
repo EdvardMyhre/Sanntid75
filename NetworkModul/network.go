@@ -86,18 +86,21 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 			select {
 			case p := <-peerUpdateCh:
 				if myBackupId == ""{
-					for i := 0; i < 5; i++{
+					/*for i := 0; i < 5; i++{
 						send_message_is_my_backup_alive(id, message_sendCh)
-						fmt.Println("sender melding om backup lever:    ", myBackupId)
+						//fmt.Println("sender melding om backup lever:    ", myBackupId)
 					}
-					time.Sleep(200 * time.Millisecond)
+					time.Sleep(200 * time.Millisecond)*/
 					if myBackupAlive == false {
-						myBackupId = find_backup(id, p, &myBackupAlive, message_sendCh)
+						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 					}
-					fmt.Println("myBackupId er tom men ble ikke fornyet:    ", myBackupId)
+					//fmt.Println("myBackupId er tom men ble ikke fornyet:    ", myBackupId)
 				}
-				fmt.Println("Min id er:       ", id)
-				fmt.Println("Min backupid er: ", myBackupId)
+				my_backup_is_gone(&myBackupAlive, backupFor, p)
+				fmt.Println("Min id er:              ", id)
+				fmt.Println("Min backupid er:        ", myBackupId)
+				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
+				fmt.Println("backupFor:              ", backupFor)
 				//fmt.Printf("Peer update:\n")
 				//fmt.Printf("  Peers:    %q\n", p.Peers)
 				//fmt.Printf("  Backup:   %q\n", p.Backup)
@@ -117,6 +120,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 						n_to_a_tasks_manager <- a
 
 					case messageid.ID_MODULE_NETWORK:
+						fmt.Println("motat melding:   ", a)
 						message_receive_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
@@ -148,30 +152,32 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 
 
 //--------------------- Finner din backup  -----------------------------
-func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool,message_sendCh chan structer.MainData) string {
+func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan structer.MainData, myBackupId *string)  {
 	if len(p.Peers) > 1 {
 		for {
 			i := rand.Intn(len(p.Peers))
 			//fmt.Println(i)
-			myBackupId := p.Peers[i]
-			if myBackupId != id{
+			//myBackupId_temp := p.Peers[i]
+			if p.Peers[i] != id{
 				*myBackupAlive = true
+				*myBackupId = p.Peers[i]
 
 				message := structer.MainData{}
 				message.Source = id
-				message.Destination = myBackupId
+				message.Destination = *myBackupId
 				message.Message_type = messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP
 				row1 := []int{}
 				row2 := []int{}
 				message.Data = append(message.Data, row1)
 				message.Data = append(message.Data, row2)
 				message_sendCh <- message
-
-				return myBackupId
+				fmt.Println("find_backup: ", message)
+				time.Sleep(50 * time.Millisecond)
+				return
 			}
 		}
 	}
-	return ""
+	//*myBackupId = ""
 }
 
 
@@ -181,6 +187,13 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool,message_send
 
 //--------------------------- Legger hvem du er backupfor i en liste ----------------------
 func backup_for(id string, a structer.MainData, backupFor *[]string) {
+	fmt.Println(" ")
+	fmt.Println("Destination:          ", a.Destination)
+	fmt.Println("min id:               ", id)
+	k := a.Message_type & 31
+	fmt.Println("a.Message_type & 31:  ", k)
+	fmt.Println("messageid:            ", messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP)
+	fmt.Println(" ")
 	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP){
 		*backupFor = append(*backupFor, a.Source)
 		fmt.Println("backup_for:    ", *backupFor)
@@ -228,7 +241,7 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 	message.Data = append(message.Data, row1)
 	message.Data = append(message.Data, row2)
 	message_sendCh <- message
-	fmt.Println("send_message_is_my_backup_alive:    ", message)
+	//fmt.Println("send_message_is_my_backup_alive:    ", message)
 	/*for {
 		message_sendCh <- message
 		time.Sleep(1 * time.Second)
@@ -242,6 +255,7 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 func message_receive_backup_alive(id string, m structer.MainData, backupFor []string, message_sendCh chan structer.MainData){
 	if (m.Destination == "broadcast") && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE){
 		for i := range backupFor{
+			fmt.Println("kom inn i message_receive_backup_alive:  ", i)
 			if backupFor[i] == m.Source {
 					message := structer.MainData{}
 					message.Source = id
@@ -252,12 +266,12 @@ func message_receive_backup_alive(id string, m structer.MainData, backupFor []st
 					message.Data = append(message.Data, row1)
 					message.Data = append(message.Data, row2)
 					message_sendCh <- message
-					fmt.Println("send_message_is_my_backup_alive:    ", message)
+					fmt.Println("message_receive_backup_alive:    ", message)
 
 			}
 		}
 	}
-	fmt.Println("message_receive_backup_alive2")
+	//fmt.Println("message_receive_backup_alive2")
 
 }
 
@@ -269,6 +283,19 @@ func my_backup_is_alive(id string, myBackupAlive *bool, m structer.MainData) {
 
 }
 
+
+func my_backup_is_gone(myBackupAlive *bool, backupFor []string, p peers.PeerUpdate) {
+	//k := len(backupFor)
+	//f := len(p.Lost)
+	//fmt.Println("my_backup_is_gone: ", k, "    : ", f)
+	for i := range backupFor{
+		for j := range p.Lost{
+			if backupFor[i] == p.Lost[j]{
+				*myBackupAlive = false
+			}
+		}
+	}
+}
 
 
 
