@@ -255,7 +255,7 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 func message_receive_backup_alive(id string, m structer.MainData, backupFor []string, message_sendCh chan structer.MainData){
 	if (m.Destination == "broadcast") && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE){
 		for i := range backupFor{
-			fmt.Println("kom inn i message_receive_backup_alive:  ", i)
+			//fmt.Println("kom inn i message_receive_backup_alive:  ", i)
 			if backupFor[i] == m.Source {
 					message := structer.MainData{}
 					message.Source = id
