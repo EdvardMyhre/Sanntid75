@@ -17,18 +17,19 @@ import (
 func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan structer.MainData, n_to_a_tasks_manager chan structer.MainData,
 					distri_to_n chan structer.MainData, p_task_manager_to_n chan structer.MainData, a_task_manager_to_n chan structer.MainData) {
 
-	//------------------------ Kanaler mellom moduler -------------------------------------
 
-	//assigned_tasks_manager_to_network := make(chan structer.MainData)
-	//network_to_assigned_tasks_manager := make(chan structer.MainData)
 
-	//distributing_state_machine_to_network := make(chan structer.MainData)
-	//network_to_distributing_state_machine := make(chan structer.MainData)
+//-----------------------  Finner lokal ip og deklarerer myBackupId --------------------
+	id := find_localip()
+	myBackupId := ""
+	myBackupAlive := false
+	var backupFor []string
+	backupFor = ""
 
-	//task_manager_to_network := make(chan structer.MainData)
-	//network_to_task_manager := make(chan structer.MainData)
 
 	var message_send structer.MainData
+
+
 
 	//-----------------------  Lager kanal som har oversikt over hvem som er i livet --------------------
 	peerUpdateCh := make(chan peers.PeerUpdate)
@@ -39,9 +40,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 	message_receivedCh := make(chan structer.MainData)
 
 
-//-----------------------  Finner lokal ip og deklarerer myBackupId --------------------
-	id := find_localip()
-	myBackupId := ""
+
 
 	//-----------------------  Sjekker hvem som er online --------------------
 	go peers.Transmitter(50018, id, peerTxEnable)
@@ -51,23 +50,10 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 	go bcast.Transmitter(40018, message_sendCh)
 	go bcast.Receiver(40018, message_receivedCh)
 
-	//-----------------------  Melding for å sjekke om man har en backup --------------------
-	/*go func() {
-		message := structer.MainData{}
-		message.Source = id
-		message.Destination = "broadcast"
-		message.Message_type = messageid.ID_MSG_TYPE_MY_BACKUP
-		row1 := []int{}
-		row2 := []int{}
-		message.Data = append(message.Data, row1)
-		message.Data = append(message.Data, row2)
 
-		for {
-			message_sendCh <- message
-			time.Sleep(1 * time.Second)
-		}
-	}()*/
-	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
+
+
+	//-----------------------  Får meldinger fra modul og sender til broadcast --------------------
 	go func(){
 		for {
 			select{ 
@@ -81,6 +67,13 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				message_send = a
 			}
 			message_send.Source = id
+
+			if message_send.Destination == "backup"{
+				if myBackupAlive == false{
+					myBackupId = find_backup()
+				}
+				message_send.Destination = myBackupId
+			}
 			message_sendCh <- message_send
 		}
 	}()
@@ -96,8 +89,14 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 		for {
 			select {
 			case p := <-peerUpdateCh:
-				if myBackupId == "" {
-					myBackupId = find_backup(id, p)
+				if myBackupId == ""{
+					for i := 0; i < 5; i++{
+						send_message_is_my_backup_alive(id, message_sendCh)
+					}
+					time.Sleep(200 * time.Millisecond)
+					if myBackupAlive == false {
+						myBackupId = find_backup(id, p, message_sendCh)
+					}
 				}
 				//fmt.Println("Min id er:       ", id)
 				//fmt.Println("Min backupid er: ", myBackupId)
@@ -120,9 +119,9 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 						n_to_a_tasks_manager <- a
 
 					case messageid.ID_MODULE_NETWORK:
-						backup(a, myBackupId, id, message_sendCh)
-						//fmt.Println("melding fra message_receivedCh: ", a)
-
+						message_receive_backup_alive(id, a, backupFor, message_sendCh)
+						my_backup_is_alive(id, &myBackupAlive)
+						backup_for(a, &backupFor)
 					}
 				}
 			}
@@ -148,19 +147,47 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 	return myBackupId
 }*/
 
-func find_backup(id string, p peers.PeerUpdate) string {
+
+
+//--------------------- Finner din backup  -----------------------------
+func find_backup(id string, p peers.PeerUpdate, message_sendCh chan structer.MainData) string {
 	if len(p.Peers) > 1 {
 		for {
 			i := rand.Intn(len(p.Peers))
 			//fmt.Println(i)
 			myBackupId := p.Peers[i]
 			if myBackupId != id{
+				myBackupAlive = true
+
+				message := structer.MainData{}
+				message.Source = id
+				message.Destination = m.myBackupId
+				message.Message_type = messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP
+				row1 := []int{}
+				row2 := []int{}
+				message.Data = append(message.Data, row1)
+				message.Data = append(message.Data, row2)
+				message_sendCh <- message
+
 				return myBackupId
 			}
 		}
 	}
 	return ""
 }
+
+
+
+
+
+
+//--------------------------- Legger hvem du er backupfor i en liste ----------------------
+func backup_for(id string,a structer.MainData, *backupFor) {
+	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP){
+		*backupFor = append(*backupFor, a.Source)
+	}
+}
+
 
 
 
@@ -185,21 +212,60 @@ func find_localip() string {
 	return id
 }
 
-func backup(m structer.MainData, myBackupId string, id string, message_sendCh chan structer.MainData) {
+
+
+
+
+
+
+//-----------------------  Melding for å sjekke om man har en backup --------------------
+func send_message_is_my_backup_alive(id string, message_sendCh chan structer.MainData) {
+	message := structer.MainData{}
+	message.Source = id
+	message.Destination = "broadcast"
+	message.Message_type = messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE
+	row1 := []int{}
+	row2 := []int{}
+	message.Data = append(message.Data, row1)
+	message.Data = append(message.Data, row2)
+	message_sendCh <- message
+	/*for {
+		message_sendCh <- message
+		time.Sleep(1 * time.Second)
+	}*/
+}()
+
+
+
+
+//--------------------------- Min Backup lever ------------------------------
+func message_receive_backup_alive(id string, m structer.MainData, backupFor []string, message_sendCh chan structer.MainData){
 	if (m.Destination == "broadcast") && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE){
-		//fmt.Println("heieie")
-		if m.Source == myBackupId{
-		message := structer.MainData{}
-		message.Source = id
-		message.Destination = m.Source
-		message.Message_type = messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE
-		row1 := []int{}
-		row2 := []int{}
-		message.Data = append(message.Data, row1)
-		message.Data = append(message.Data, row2)
-		message_sendCh <- message	
-		fmt.Println("message:  ", message)
+		for i := range backupFor{
+			if backupFor[i] == m.Source {
+					message := structer.MainData{}
+					message.Source = id
+					message.Destination = m.Source
+					message.Message_type = messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE
+					row1 := []int{}
+					row2 := []int{}
+					message.Data = append(message.Data, row1)
+					message.Data = append(message.Data, row2)
+					message_sendCh <- message
+
+			}
 		}
 	}
 
 }
+
+func my_backup_is_alive(id string,*myBackupAlive bool) {
+	if (m.Destination == id) && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE){
+		*myBackupAlive = true
+	}
+
+}
+
+
+
+
