@@ -6,6 +6,9 @@ import "time"
 import "fmt"
 
 func Controller(taskc <-chan int, statusc chan<- types.Status) {
+	var timeOpen time.Duration
+	timeOpen = 2
+
 	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 	for driver.GetFloorSensorSignal() != 0 {
 	}
@@ -32,20 +35,20 @@ func Controller(taskc <-chan int, statusc chan<- types.Status) {
 			statusc <- status
 		}
 
-		if status.Finished == 1 {
+		if status.Finished != 0 {
+			fmt.Println("CONTROLLER: finished task, status.Destination:", status.Destination_floor, "status.Floor:", status.Floor, "status.Finished:", status.Finished)
 			status.Destination_floor = <-taskc
 			status.Finished = 0
 			statusc <- status
-			fmt.Println("CONTROLLER: finished task, status:", status)
 		}
 
 		if status.Finished == 0 {
 			if floor_signal == status.Destination_floor {
 				driver.SetMotorDirection(types.MOTOR_DIR_STOP)
 				driver.SetDoorOpenLamp(types.LAMP_ON)
-				time.Sleep(time.Second * 4)
+				time.Sleep(time.Second * timeOpen)
 				driver.SetDoorOpenLamp(types.LAMP_OFF)
-				status.Finished = 1
+				status.Finished = 255
 				statusc <- status
 			} else if floor_signal >= 0 && floor_signal < status.Destination_floor {
 				driver.SetMotorDirection(types.MOTOR_DIR_UP)
