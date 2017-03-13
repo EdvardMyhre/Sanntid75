@@ -25,25 +25,38 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	//Boot routine
 	msg_out.Destination = "backup"
 	msg_out.Type = types.REQUEST_BACKUP
-	udp_tx_c <- msg_out
-	tries := 10
+
+	recieve_tries := 10
+	send_tries := 10
 	loaded := 0
-	for i := 0; i < tries; i++ {
+	fmt.Println("AMANAGER: Sending request for backup")
+
+	for j := 0; j < send_tries; j++ {
 		if loaded == 1 {
 			break
 		}
-		select {
-		case msg_in = <-udp_rx_c:
-			if msg_in.Type == types.GIVE_BACKUP {
-				assigned_tasks = slice2tasks(msg_in.Data)
-				loaded = 1
-				fmt.Println("AMANAGER: Backup loaded")
+
+		udp_tx_c <- msg_out
+		for i := 0; i < recieve_tries; i++ {
+			if loaded == 1 {
+				break
 			}
-		case <-time.After(time.Second):
-			if i == tries-1 {
-				fmt.Println("AMANAGER: No backup available")
+			select {
+			case msg_in = <-udp_rx_c:
+				if msg_in.Type == types.GIVE_BACKUP {
+					assigned_tasks = slice2tasks(msg_in.Data)
+					loaded = 1
+					fmt.Println("AMANAGER: Backup loaded")
+				}
+			case <-time.After(time.Second):
+				if i == recieve_tries-1 {
+					fmt.Println("AMANAGER: Resending request for backup")
+				}
 			}
 		}
+	}
+	if loaded == 0 {
+		fmt.Println("AMANAGER: No backup! TASKS ARE LOST")
 	}
 
 	l := len(assigned_tasks)
@@ -88,7 +101,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					select {
 					case elev_task_c <- task_current.Floor:
 					case <-time.After(time.Second):
-						fmt.Println("AMANAGER: elevator.Controller not responding! Task is lost")
+						fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
 					}
 				}
 
