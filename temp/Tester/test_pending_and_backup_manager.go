@@ -73,11 +73,30 @@ func Test_pendingandBackup_manager_assignedSimulator(send_chan chan<- types.Task
 func Test_pendingandBackup_manager_distributorSimulator(send_chan chan<- types.Task, rec_chan <-chan types.Task){
 	//Send periodic status updates
 	var chan_message types.Task
+	var time_duration time.Time
+	
+	time_duration = time.Now()
+	
 	for{
-		random_distributorstate := rand.Intn(2)
-		chan_message.Finished = random_distributorstate
-		time.Sleep(1*time.Second)
-		send_chan <- chan_message
+		if time.Since(time_duration) > 1*time.Second {
+			random_distributorstate := rand.Intn(2)
+			chan_message.Finished = random_distributorstate
+			chan_message.Finished = 255
+			time.Sleep(1*time.Second)
+			select{
+				case send_chan <- chan_message:
+					time_duration = time.Now()
+				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+					fmt.Println("Distributor send FAILED<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+			}
+		}
+		
+		select{
+			case chan_message := <- rec_chan:
+				fmt.Println("Task distributor received message; ",chan_message,"                                                                  DISTRIBUTOR RECEIVED MESSAGE")
+			default:
+		}
+		
 		
 	}
 	

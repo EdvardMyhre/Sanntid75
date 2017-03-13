@@ -100,7 +100,7 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 //BEHAVIOR FOR RECEIVING FROM BUTTON POLLER
 		select{
 			case message_buttonOrder := <- channel_from_button_intermediary:
-				adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, 0, false)			
+				adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, 0, true)			
 			default:
 				//Do nothing
 				
@@ -109,7 +109,7 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 //BEHAVIOR FOR RECEIVING FROM ASSIGNED TASKS MANAGER
 		select{
 			case message_buttonOrder := <- channel_from_assigned_tasks_manager:
-				adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, message_buttonOrder.Assigned, true)	
+				adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, message_buttonOrder.Assigned, false)	
 			default:
 					//Do nothing
 		}
@@ -159,12 +159,12 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 				assigned_newOrderType = types.BTN_TYPE_COMMAND
 				assigned_order_pendingList_startingIndex = i
 				break
-			} else if (pendingList[i].upOrder != 0) && (time.Since(pendingList[i].timestamp_upOrder) > types.TIMEOUT_PENDINGLIST_ORDER){
+			} else if (pendingList[i].upOrder != 0) && (time.Since(pendingList[i].timestamp_upOrder) > types.TIMEOUT_PENDINGLIST_ORDER) && !time.Time.IsZero(pendingList[i].timestamp_upOrder){
 				assigned_newOrderBool = true
 				assigned_newOrderType = types.BTN_TYPE_UP
 				assigned_order_pendingList_startingIndex = i
 				break
-			} else if (pendingList[i].downOrder != 0) && (time.Since(pendingList[i].timestamp_downOrder) > types.TIMEOUT_PENDINGLIST_ORDER) {
+			} else if (pendingList[i].downOrder != 0) && (time.Since(pendingList[i].timestamp_downOrder) > types.TIMEOUT_PENDINGLIST_ORDER) && !time.Time.IsZero(pendingList[i].timestamp_downOrder) {
 				assigned_newOrderBool = true
 				assigned_newOrderType = types.BTN_TYPE_DOWN
 				assigned_order_pendingList_startingIndex = i
@@ -177,16 +177,10 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 			sendOrder.Type = assigned_newOrderType
 			select{
 				case channel_to_assigned_tasks_manager <- sendOrder:
-					fmt.Println("                                                    SENT new order to assigned tasks manager: ",sendOrder)
-					if assigned_newOrderType == types.BTN_TYPE_COMMAND {
-						pendingList[assigned_order_pendingList_startingIndex].timestamp_internalOrder = time.Now()
-					} else if assigned_newOrderType == types.BTN_TYPE_UP {
-						pendingList[assigned_order_pendingList_startingIndex].timestamp_upOrder = time.Now()
-					} else if assigned_newOrderType == types.BTN_TYPE_DOWN {
-						pendingList[assigned_order_pendingList_startingIndex].timestamp_downOrder = time.Now()
-					}	
+					fmt.Println("SENT new order to assigned tasks manager: ",sendOrder)
+					adjust_pendinglist(sendOrder.Type, sendOrder.Floor, 0, true)
 				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
-					fmt.Println("                                                    SENT new order to assigned tasks manager FAILED DUE to TIMEOUT")
+					fmt.Println("SENT new order to assigned tasks manager FAILED DUE to TIMEOUT")
 			}	
 			if assigned_order_pendingList_startingIndex >= (len(pendingList)-1){
 				assigned_order_pendingList_startingIndex = 0
@@ -197,33 +191,82 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 			assigned_order_pendingList_startingIndex = 0
 		}
 		
-		
-	}
-	
-//BEHAVIOR FOR SENDING TO TASK DISTRIBUTOR
-	if (distributor_state.busy == 0) || (distributor_state.timestamp_busyTime > TIMEOUT_MODULE_DISTRIBUTOR) {
-		//Iterate through an look for unassigned UP and DOWN orders.
-		//Send first one seen to distributor. Set busy to true
-		fmt.Println("Sending distribution task")
-	}
-	
 
+//BEHAVIOR FOR SENDING TO TASK DISTRIBUTOR
+		distribute_newOrderBool := false
+		distribute_newOrderType := 0
+		distribute_newOrderIndex := 0
+		
+		if (distributor_state.busy == 0) || (time.Since(distributor_state.timestamp_busyTime) > types.TIMEOUT_MODULE_DISTRIBUTOR) {
+			
+			//Iterate through an look for unassigned UP and DOWN orders.
+			//Send first one seen to distributor. Set busy to true	
+			for i := 0 ; i <len(pendingList) ; i++ {
+				if (pendingList[i].upOrder != 0) && (time.Time.IsZero(pendingList[i].timestamp_upOrder)) {
+					distribute_newOrderBool = true
+					distribute_newOrderType = types.BTN_TYPE_UP
+					distribute_newOrderIndex = i
+					break
+				} else if (pendingList[i].downOrder != 0) && (time.Time.IsZero(pendingList[i].timestamp_downOrder)) {
+					distribute_newOrderBool = true
+					distribute_newOrderType = types.BTN_TYPE_DOWN
+					distribute_newOrderIndex = i
+					break
+				}
+			}	
+		}
+	
+		if distribute_newOrderBool {
+			var sendOrder types.Task
+			sendOrder.Floor = distribute_newOrderIndex
+			sendOrder.Type = distribute_newOrderType
+			select {
+				case channel_to_distributor <- sendOrder:
+					fmt.Println("Message to Distributor SENT")
+					adjust_pendinglist(sendOrder.Type, sendOrder.Floor, 0, true )
+					distributor_state.busy = 255
+				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+					fmt.Println("Message to Distributor FAILED to send")
+			}		
+		}
+	}
+	
 }
+
+
+
+
+
+
+
+
 
 
 func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_network 			chan<- types.MainData,
 																			channel_to_pending_manager 	chan<- types.MainData){
-	var message_maindata types.MainData
-	for{
-		time.Sleep(15*time.Second)
-		channel_to_pending_manager <- message_maindata
+	//var message_maindata types.MainData
+//CREATE MATRIX
+
+	for {
+//BEHAVIOR FOR RECEIVING FROM NETWORK
+		select {
+			case network_message := <- channel_from_network:
+				fmt.Println("Received something from network: ",network_message)
+			
+			default:
+			//Do nothing
+		}
+//BEHAVIOR FOR SENDING TO NETWORK
+
+
+//BEHAVIOR FOR SENDING TO PENDING MANAGER
 	}
 																				
 }
 
 
 
-//FLOOR, ASSIGNED, BUTTON TYPE
+//FLOOR, ASSIGNED, BUTTON TYPE, TIMESTAMP
 func adjust_pendinglist(adjust_type int, adjust_floor int,adjust_assigned int, adjust_timestamp bool){
 	if adjust_floor >= len(pendingList) || adjust_floor < 0{
 		//Illegal floor value
