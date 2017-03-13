@@ -182,7 +182,7 @@ func find_backup(id string, p peers.PeerUpdate, message_sendCh chan structer.Mai
 
 
 //--------------------------- Legger hvem du er backupfor i en liste ----------------------
-func backup_for(id string,a structer.MainData, *backupFor) {
+func backup_for(id string, a structer.MainData, backupFor *string) {
 	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP){
 		*backupFor = append(*backupFor, a.Source)
 	}
@@ -233,7 +233,7 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 		message_sendCh <- message
 		time.Sleep(1 * time.Second)
 	}*/
-}()
+}
 
 
 
@@ -259,7 +259,7 @@ func message_receive_backup_alive(id string, m structer.MainData, backupFor []st
 
 }
 
-func my_backup_is_alive(id string,*myBackupAlive bool) {
+func my_backup_is_alive(id string, myBackupAlive *bool) {
 	if (m.Destination == id) && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE){
 		*myBackupAlive = true
 	}
