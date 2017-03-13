@@ -234,7 +234,12 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 
 
 
-
+type struct_backup_element struct {
+	SourceIP       			string
+	timestamp_lastSeen		time.Time
+	
+	
+}
 
 
 
@@ -250,6 +255,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 		select {
 			case network_message := <- channel_from_network:
 				fmt.Println("Received something from network: ",network_message)
+				//if network_message.Message_type == 
 			
 			default:
 			//Do nothing
