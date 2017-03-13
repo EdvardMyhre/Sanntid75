@@ -3,8 +3,9 @@ package elevator
 import "../driver"
 import "../types"
 import "time"
+import "fmt"
 
-func Controller(statusc chan<- types.Status, taskc <-chan int) {
+func Controller(taskc <-chan int, statusc chan<- types.Status) {
 	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 	for driver.GetFloorSensorSignal() != 0 {
 	}
@@ -35,6 +36,7 @@ func Controller(statusc chan<- types.Status, taskc <-chan int) {
 			status.Destination_floor = <-taskc
 			status.Finished = 0
 			statusc <- status
+			fmt.Println("CONTROLLER: finished task, status:", status)
 		}
 
 		if status.Finished == 0 {
@@ -51,6 +53,7 @@ func Controller(statusc chan<- types.Status, taskc <-chan int) {
 				driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 			}
 		}
+		time.Sleep(time.Millisecond * 10)
 	}
 
 }
@@ -114,11 +117,16 @@ func ButtonPoller(taskc chan<- types.Task) {
 						button_pushes[j] = button_pushes_this_loop[i]
 						task.Type = button_pushes_this_loop[i].Type
 						task.Floor = button_pushes_this_loop[i].Floor
-						taskc <- task
+						select {
+						case taskc <- task:
+						case <-time.After(time.Second * 5):
+							fmt.Println("BUTTONPOLLER: button press lost!")
+						}
 					}
 				}
 			}
 		}
+		time.Sleep(time.Millisecond * 10)
 	}
 }
 

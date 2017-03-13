@@ -23,6 +23,12 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	weight := 255
 
 	//Boot routine
+	for button_type := 0; button_type < 3; button_type++ {
+		for floor := 0; floor < types.NUMBER_OF_FLOORS; floor++ {
+			driver.SetButtonLamp(button_type, floor, 0)
+		}
+	}
+
 	msg_out.Destination = "backup"
 	msg_out.Type = types.REQUEST_BACKUP
 
@@ -46,7 +52,6 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				if msg_in.Type == types.GIVE_BACKUP {
 					assigned_tasks = slice2tasks(msg_in.Data)
 					loaded = 1
-					fmt.Println("AMANAGER: Backup loaded")
 				}
 			case <-time.After(time.Second):
 				if i == recieve_tries-1 {
@@ -55,16 +60,17 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 			}
 		}
 	}
-	if loaded == 0 {
+	if loaded > 0 {
+		fmt.Println("AMANAGER: Backup loaded")
+	} else {
 		fmt.Println("AMANAGER: No backup! TASKS ARE LOST")
 	}
-
 	l := len(assigned_tasks)
 	for i := 0; i < l; i++ {
 		driver.SetButtonLamp(assigned_tasks[i].Type, assigned_tasks[i].Floor, 1)
-		fmt.Println("AMANGARER: Lamp set")
 	}
 
+	//Reading channels for input
 	for {
 		//Input from controller, i.e. new status from controller
 		select {
@@ -84,7 +90,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				}
 
 				//Update lights
-				if task_current.Type != 2 {
+				if task_current.Type != types.BTN_TYPE_COMMAND {
 					msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice([]types.Task{task_current})}
 					select {
 					case udp_tx_c <- msg_out:
@@ -93,20 +99,22 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					}
 				}
 				driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
-				fmt.Println("AMANGARER: Lamp set")
-
-				//Start on new task
-				if len(assigned_tasks) > 0 {
-					task_current = assigned_tasks[0]
-					select {
-					case elev_task_c <- task_current.Floor:
-					case <-time.After(time.Second):
-						fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
-					}
-				}
 
 			}
-		case <-time.After(time.Millisecond):
+		case <-time.After(time.Millisecond * 10):
+		}
+
+		//Start on new task of we finished the last
+		if task_current.Finished != 0 {
+			if len(assigned_tasks) > 0 {
+				fmt.Println("AMANAGER: starting on new task")
+				task_current = assigned_tasks[0]
+				select {
+				case elev_task_c <- task_current.Floor:
+				case <-time.After(time.Second):
+					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
+				}
+			}
 		}
 
 		//Input from pmanager, i.e new task from pmanager, command from cab or timed out tasks!
@@ -127,7 +135,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 			}
 
 			//Update lights
-			if task_new.Type != 2 {
+			if task_new.Type != types.BTN_TYPE_COMMAND {
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice([]types.Task{task_new})}
 				select {
 				case udp_tx_c <- msg_out:
@@ -135,8 +143,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					fmt.Println("AMANAGER: network not responding!")
 				}
 			}
-			driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
-			fmt.Println("AMANGARER: Lamp set")
+			driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
 
 			//Reply to pmanager
 			select {
@@ -144,7 +151,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 			case <-time.After(time.Second):
 				fmt.Println("AMANAGER: pmanager not responding!")
 			}
-		case <-time.After(time.Millisecond):
+		case <-time.After(time.Millisecond * 10):
 		}
 
 		//Message from udp
@@ -154,6 +161,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 			//Weight request
 			case types.REQUEST_WEIGHT:
+				task_temp = nil
 				task_temp = slice2tasks(msg_in.Data)
 				if len(task_temp) > 0 {
 					task_new = task_temp[0]
@@ -191,6 +199,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 			//New task assigned to this elevator
 			case types.DISTRIBUTE_ORDER:
+				task_temp = nil
 				task_temp = slice2tasks(msg_in.Data)
 				if len(task_temp) > 0 {
 					task_new = task_temp[0]
@@ -227,8 +236,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					}
 
 					//Set local lights
-					driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
-					fmt.Println("AMANGARER: Lamp set")
+					driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
 
 				} else {
 					fmt.Println("AMANAGER: could not deserialize task from udp!")
@@ -236,19 +244,20 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 			//Asked to set lights
 			case types.SET_LIGHT:
+				task_temp = nil
 				task_temp = slice2tasks(msg_in.Data)
 				if len(task_temp) > 0 {
 					task_new = task_temp[0]
 					if task_new.Assigned == 0 {
 						fmt.Println("AMANAGER: has been told to turn on light for unassigned task!")
 					}
-					if task_new.Type != 2 {
+					if task_new.Type != types.BTN_TYPE_COMMAND {
 						if task_new.Finished != 0 {
-							driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
+							driver.SetButtonLamp(task_new.Type, task_new.Floor, 0)
 						} else {
-							driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+							driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
 						}
-						fmt.Println("AMANGARER: Lamp set")
+
 					}
 				} else {
 					fmt.Println("AMANAGER: could not deserialize task from udp!")
@@ -256,6 +265,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 			//A task has been assigned to another elevator, we inform pmanager and set lights
 			case types.TASK_ASSIGNED:
+				task_temp = nil
 				task_temp = slice2tasks(msg_in.Data)
 				if len(task_temp) > 0 {
 					task_new = task_temp[0]
@@ -271,13 +281,13 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					}
 
 					//Update lights
-					if task_new.Type != 2 {
+					if task_new.Type != types.BTN_TYPE_COMMAND {
 						if task_new.Finished != 0 {
-							driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
+							driver.SetButtonLamp(task_new.Type, task_new.Floor, 0)
 						} else {
-							driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+							driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
 						}
-						fmt.Println("AMANGARER: Lamp set")
+
 					}
 
 				} else {
@@ -288,7 +298,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				fmt.Println("AMANAGER: message from udp unreconisible!")
 			}
 
-		case <-time.After(time.Millisecond):
+		case <-time.After(time.Millisecond * 10):
 		}
 	} //end of inf loop
 }

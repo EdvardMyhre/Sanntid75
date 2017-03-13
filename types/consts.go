@@ -1,7 +1,7 @@
 package types
 
 const (
-	ElevatorType = 1 //1 is simulation, 0 is comedi
+	ElevatorType = 0 //1 is simulation, 0 is comedi
 )
 
 const (
