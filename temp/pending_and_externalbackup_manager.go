@@ -60,7 +60,7 @@ type struct_pendingListFloor struct {
 	timestamp_internalOrder time.Time
 	
 }
-	var pendingList [types.NUMBER_OF_FLOORS+1] struct_pendingListFloor
+	var pendingList [types.NUMBER_OF_FLOORS] struct_pendingListFloor
 	
 	
 type struct_distributor_state struct {
@@ -92,7 +92,7 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 	distributor_state.timestamp_busyTime = time.Time{}
 	
 	//Variable declarations
-	assigned_order_pendingList_startingIndex := 1
+	assigned_order_pendingList_startingIndex := 0
 	
 	fmt.Println("pendingList after being zeroed out: ", pendingList)
 	
@@ -194,23 +194,30 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 			select{
 				case channel_to_assigned_tasks_manager <- sendOrder:
 					fmt.Println("                                                    SENT new order to assigned tasks manager: ",sendOrder)
+					if assigned_newOrderType == types.BTN_TYPE_COMMAND {
+						pendingList[assigned_order_pendingList_startingIndex].timestamp_internalOrder = time.Now()
+					} else if assigned_newOrderType == types.BTN_TYPE_UP {
+						pendingList[assigned_order_pendingList_startingIndex].timestamp_upOrder = time.Now()
+					} else if assigned_newOrderType == types.BTN_TYPE_DOWN {
+						pendingList[assigned_order_pendingList_startingIndex].timestamp_downOrder = time.Now()
+					}	
 				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 					fmt.Println("                                                    SENT new order to assigned tasks manager FAILED DUE to TIMEOUT")
 			}
 			
 			
 			
-			if assigned_newOrderType == types.BTN_TYPE_COMMAND {
-				pendingList[assigned_order_pendingList_startingIndex].timestamp_internalOrder = time.Now()
-			} else if assigned_newOrderType == types.BTN_TYPE_UP {
-				pendingList[assigned_order_pendingList_startingIndex].timestamp_upOrder = time.Now()
-			} else if assigned_newOrderType == types.BTN_TYPE_DOWN {
-				pendingList[assigned_order_pendingList_startingIndex].timestamp_downOrder = time.Now()
+			
+			
+			if assigned_order_pendingList_startingIndex >= (len(pendingList)-1){
+				assigned_order_pendingList_startingIndex = 0
+			} else {
+				assigned_order_pendingList_startingIndex += 1
 			}
 			
 			
 		} else {
-			assigned_order_pendingList_startingIndex = 1
+			assigned_order_pendingList_startingIndex = 0
 		}
 		
 		
@@ -243,7 +250,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 																				
 }
 func adjust_pendinglist(adjust_pendinglist_message types.Task, adjust_timestamp bool){
-	if adjust_pendinglist_message.Floor >= len(pendingList) || adjust_pendinglist_message.Floor <= 0{
+	if adjust_pendinglist_message.Floor >= len(pendingList) || adjust_pendinglist_message.Floor < 0{
 		//Illegal floor value
 		fmt.Println("Pending adjustment: illegal FLOOR value")
 		
@@ -283,7 +290,7 @@ func adjust_pendinglist(adjust_pendinglist_message types.Task, adjust_timestamp 
 	
 	//Prints below can be removed
 	fmt.Println("Current pending list: ")
-	for i := 1 ; i<len(pendingList);i++{
+	for i := 0 ; i<len(pendingList);i++{
 		fmt.Println(pendingList[i])
 	}
 	fmt.Println("")

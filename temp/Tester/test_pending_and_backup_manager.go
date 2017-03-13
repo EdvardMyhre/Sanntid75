@@ -21,7 +21,15 @@ func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- 
 		message_output.Floor = random_number
 		message_output.Type = random_command
 		time.Sleep(2*time.Second)
-		send_chan <- message_output
+		
+		select {
+			case send_chan <- message_output:
+			
+			case <-time.After(1*time.Second):
+				fmt.Println("BUTTON INTERMEDIARY SEND FAIL")
+		}
+
+
 	}
 	
 	
@@ -40,7 +48,18 @@ func Test_pendingandBackup_manager_assignedSimulator(send_chan chan<- types.Task
 		chan_message.Type = random_command
 		chan_message.Assigned = random_addremove
 		time.Sleep(4*time.Second)
-		send_chan <- chan_message
+		select {
+			case send_chan <- chan_message:
+			case <-time.After(1*time.Second):
+				fmt.Println("ASSIGNED SIMULATOR SEND FAIL")
+		}
+		
+		select{
+			case chan_message := <- rec_chan:
+				fmt.Println("Received assigned task from pending manager: ",chan_message)
+			default:
+		}
+		
 	}
 	
 	
