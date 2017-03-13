@@ -311,8 +311,6 @@ func tasks2slice(tasks []types.Task) [][]int {
 }
 
 func addTask(tasks []types.Task, task types.Task, status types.Status) (int, []types.Task) {
-	//task ligger ikke i tasks fra før av. Skal nå legge den inn i riktig rekkefølge og returnere en vekt på å utføre denne task.
-	//Ingen merging av tasks
 
 	distance := taskDistance(task, status)
 	added := 0
@@ -342,7 +340,6 @@ func taskDistance(task types.Task, status types.Status) int {
 	distance_floors := 0
 	abs_distance_floors := 0
 	distance_travel := 0
-	floor_offset := status.Floor
 
 	//Finner bevegelsesretning
 	direction := UP
@@ -353,35 +350,23 @@ func taskDistance(task types.Task, status types.Status) int {
 		direction = UP
 	}
 
-	//The weight is calculated as if the elevator already is on the first floor in its direction of travel
-	if status.Between_floors == 1 {
-		switch direction {
-		case UP:
-			floor_offset += 1
-		case DOWN:
-			floor_offset -= 1
-		}
-	}
-	if floor_offset == types.NUMBER_OF_FLOORS-1 {
+	//The weight is calculated as if the elevator already is on the destination floor
+	if status.Destination_floor == types.NUMBER_OF_FLOORS-1 {
 		direction = DOWN
-	} else if floor_offset == 0 {
+	} else if status.Destination_floor == 0 {
 		direction = UP
 	}
 
-	if floor_offset < 0 || floor_offset > types.NUMBER_OF_FLOORS-1 {
-		fmt.Println("ERROR: Floor out of bounds!")
-	}
-
-	distance_floors = task.Floor - floor_offset
+	distance_floors = task.Floor - status.Destination_floor
 	abs_distance_floors = distance_floors
 	if distance_floors < 0 {
 		abs_distance_floors = -distance_floors
 	}
 
 	if direction == UP && distance_floors < 0 {
-		distance_travel = 2*(types.NUMBER_OF_FLOORS-1-floor_offset) + abs_distance_floors
+		distance_travel = 2*(types.NUMBER_OF_FLOORS-1-status.Destination_floor) + abs_distance_floors
 	} else if direction == DOWN && distance_floors > 0 {
-		distance_travel = 2*floor_offset + abs_distance_floors
+		distance_travel = 2*status.Destination_floor + abs_distance_floors
 	} else {
 		distance_travel = abs_distance_floors
 	}
