@@ -129,6 +129,9 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 					distributor_state.timestamp_busyTime = time.Time{}
 					//fmt.Println("Received distributor state READY :" , distributor_state, "Finished value:", message_distributorStatus.Finished)
 				}
+				if message_distributorStatus.Assigned != 0 {
+					adjust_pendinglist(message_distributorStatus.Type, message_distributorStatus.Floor, 0, true)
+				}
 			default:
 				//Do nothing
 		}
@@ -224,7 +227,6 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 				case channel_to_distributor <- sendOrder:
 					fmt.Println("Message to Distributor SENT")
 					adjust_pendinglist(sendOrder.Type, sendOrder.Floor, 0, true )
-					distributor_state.busy = 255
 				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 					fmt.Println("Message to Distributor FAILED to send")
 			}		
