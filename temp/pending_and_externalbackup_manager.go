@@ -309,9 +309,9 @@ func adjust_pendinglist(adjust_type int, adjust_floor int,adjust_assigned int, a
 	}
 	
 	//Prints below can be removed
-	fmt.Println("Current pending list: ")
-	for i := 0 ; i<len(pendingList);i++{
-		fmt.Println(pendingList[i])
-	}
-	fmt.Println("")
+	//fmt.Println("Current pending list: ")
+	//for i := 0 ; i<len(pendingList);i++{
+	//	fmt.Println(pendingList[i])
+	//}
+	//fmt.Println("")
 }

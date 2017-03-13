@@ -83,10 +83,14 @@ func task_distributor(	channel_to_task_manager chan types.Task, 	channel_from_ta
 					message_distributingOrder.Message_type = types.MESSAGE_TYPE_REQUEST_WEIGHT
 					var networkOrder []int
 						networkOrder = nil
-						networkOrder = append(networkOrder, currentOrder.Floor)
 						networkOrder = append(networkOrder, currentOrder.Type)
+						networkOrder = append(networkOrder, currentOrder.Floor)
+						networkOrder = append(networkOrder, 0)
+						networkOrder = append(networkOrder, 0)
+						//fmt.Println("										REQUEST WEIGHT NETWORKORDER: ",networkOrder)
+						
 					message_distributingOrder.Data = [][]int{networkOrder}
-					
+						//fmt.Println("										REQUEST WEIGHT DATA FIELD: ",message_distributingOrder.Data)
 					task_distributor_state = request_weights
 				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 				
@@ -135,8 +139,10 @@ func task_distributor(	channel_to_task_manager chan types.Task, 	channel_from_ta
 					
 					var networkOrder []int
 						networkOrder = nil
-						networkOrder = append(networkOrder, currentOrder.Floor)
 						networkOrder = append(networkOrder, currentOrder.Type)
+						networkOrder = append(networkOrder, currentOrder.Floor)
+						networkOrder = append(networkOrder, 0)
+						networkOrder = append(networkOrder, 0)
 					
 					
 					message_distributingOrder.Data = [][]int{networkOrder}
