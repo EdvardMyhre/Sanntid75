@@ -94,8 +94,6 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 	//Variable declarations
 	assigned_order_pendingList_startingIndex := 0
 	
-	fmt.Println("pendingList after being zeroed out: ", pendingList)
-	
 	for{
 //BEHAVIOR FOR RECEIVING FROM BUTTON POLLER
 		select{
@@ -122,12 +120,10 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 					//Distributor is busy
 					distributor_state.busy = 255
 					distributor_state.timestamp_busyTime = time.Now()
-					//fmt.Println("Received distributor state BUSY :" , distributor_state, "Finished value:", message_distributorStatus.Finished)
 				} else if message_distributorStatus.Finished != 0{
 					//Distributor finished task, not busy anymore
 					distributor_state.busy = 0
 					distributor_state.timestamp_busyTime = time.Time{}
-					//fmt.Println("Received distributor state READY :" , distributor_state, "Finished value:", message_distributorStatus.Finished)
 				}
 				if message_distributorStatus.Assigned != 0 {
 					adjust_pendinglist(message_distributorStatus.Type, message_distributorStatus.Floor, 0, true)
@@ -144,7 +140,7 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 				fmt.Println("Received message from backup manager. Must merge into pending list, and add timestamp to tasks", message_backup)
 				for j := 0 ; j < len(message_backup.Data) ; j++ {
 					if message_backup.Data[j][0] != types.BTN_TYPE_COMMAND {
-						//adjust_pendingList(message_backup.Data[j][0], message_backup.Data[j][1], 255, true)
+						adjust_pendinglist(message_backup.Data[j][0], message_backup.Data[j][1], 255, true)
 					}
 				}	
 			default:
