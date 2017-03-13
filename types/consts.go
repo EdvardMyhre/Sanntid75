@@ -1,7 +1,7 @@
 package types
 
 const (
-	ElevatorType = 0 //1 is simulation, 0 is comedi
+	ElevatorType = 1 //1 is simulation, 0 is comedi
 )
 
 const (
@@ -52,8 +52,8 @@ const (
 //Message Constants
 const (
 	//Message types used by distributor
-	MESSAGE_TYPE_REQUEST_WEIGHT          = (ID_MODULE_AMANAGER | 24) //xxx 11000
-	MESSAGE_TYPE_DISTRIBUTE_ORDER        = (ID_MODULE_AMANAGER | 20) //xxx 10100
+	REQUEST_WEIGHT                       = (ID_MODULE_AMANAGER | 24) //xxx 11000
+	DISTRIBUTE_ORDER                     = (ID_MODULE_AMANAGER | 20) //xxx 10100
 	MESSAGE_TYPE_GIVE_DISTRIBUTOR_STATUS = (ID_MODULE_TASK_MANAGER | 24)
 
 	//Message types used by task manager

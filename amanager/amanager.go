@@ -11,17 +11,16 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData) {
 
 	//Initializing variables
+	var msg_in types.MainData
+	var msg_out types.MainData
 	var assigned_tasks []types.Task
 	var task_temp []types.Task
 	var data_temp [][]int
-	task_new := types.Task
-	task_current := types.Task
+	var task_new types.Task
+	var task_current types.Task
 
 	elev_status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 	weight := 255
-
-	msg_in := types.MainData
-	msg_out := types.MainData
 
 	//Boot routine
 	msg_out.Destination = "backup"
@@ -34,7 +33,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 			break
 		}
 		select {
-		case msg_in := <-udp_rx_c:
+		case msg_in = <-udp_rx_c:
 			if msg_in.Type == types.GIVE_BACKUP {
 				assigned_tasks = slice2tasks(msg_in.Data)
 				loaded = 1
@@ -56,7 +55,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	for {
 		//Input from controller, i.e. new status from controller
 		select {
-		case elev_status <- elev_status_c:
+		case elev_status = <-elev_status_c:
 			if elev_status.Finished != 0 && elev_status.Destination_floor == task_current.Floor {
 
 				//Update assigned tasks
@@ -84,22 +83,22 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				fmt.Println("AMANGARER: Lamp set")
 
 				//Start on new task
-				if len(assigned_tasks > 0) {
+				if len(assigned_tasks) > 0 {
 					task_current = assigned_tasks[0]
 					select {
-					case elev_task_c <- task_current:
+					case elev_task_c <- task_current.Floor:
 					case <-time.After(time.Second):
 						fmt.Println("AMANAGER: elevator.Controller not responding! Task is lost")
 					}
 				}
 
 			}
-		default:
+		case <-time.After(time.Millisecond):
 		}
 
 		//Input from pmanager, i.e new task from pmanager, command from cab or timed out tasks!
 		select {
-		case task_new <- pmanager_task_c:
+		case task_new = <-pmanager_task_c:
 			if task_new.Assigned != 0 {
 				fmt.Println("AMANAGER: been assigned an already assigned task!")
 			}
@@ -132,13 +131,13 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 			case <-time.After(time.Second):
 				fmt.Println("AMANAGER: pmanager not responding!")
 			}
-		default:
+		case <-time.After(time.Millisecond):
 		}
 
 		//Message from udp
 		select {
-		case msg_in <- udp_rx_c:
-			switch msg_in.Message_type {
+		case msg_in = <-udp_rx_c:
+			switch msg_in.Type {
 
 			//Weight request
 			case types.REQUEST_WEIGHT:
@@ -189,7 +188,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 						fmt.Println("AMANAGER: been assigned an already finished task!")
 					}
 					task_new.Assigned = 255
-					_, assigned_tasks = addTask(assigend_tasks, task_new, elev_status)
+					_, assigned_tasks = addTask(assigned_tasks, task_new, elev_status)
 
 					//Push backup
 					msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
@@ -276,7 +275,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				fmt.Println("AMANAGER: message from udp unreconisible!")
 			}
 
-		default:
+		case <-time.After(time.Millisecond):
 		}
 	} //end of inf loop
 }
@@ -319,7 +318,7 @@ func addTask(tasks []types.Task, task types.Task, status types.Status) (int, []t
 	added := 0
 	queuePos := 0
 	weight := 0
-	posWeight := 3
+	posWeight := 0
 
 	l := len(tasks)
 	for i := 0; i < l; i++ {
