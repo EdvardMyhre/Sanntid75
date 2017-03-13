@@ -1,8 +1,6 @@
 package amanager
 
 import "../driver"
-
-//import "../elevator"
 import "../types"
 
 import "fmt"
@@ -29,16 +27,30 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	msg_out.Destination = "backup"
 	msg_out.Type = types.REQUEST_BACKUP
 	udp_tx_c <- msg_out
-	select {
-	case msg_in := <-udp_rx_c:
-		assigned_tasks = slice2tasks(msg_in.Data)
-		fmt.Println("AMANAGER: Backup loaded")
-	case <-time.After(time.Second * 10):
-		fmt.Println("AMANAGER: No backup available")
+	tries := 10
+	loaded := 0
+	for i := 0; i < tries; i++ {
+		if loaded == 1 {
+			break
+		}
+		select {
+		case msg_in := <-udp_rx_c:
+			if msg_in.Type == types.GIVE_BACKUP {
+				assigned_tasks = slice2tasks(msg_in.Data)
+				loaded = 1
+				fmt.Println("AMANAGER: Backup loaded")
+			}
+		case <-time.After(time.Second):
+			if i == tries-1 {
+				fmt.Println("AMANAGER: No backup available")
+			}
+		}
 	}
+
 	l := len(assigned_tasks)
 	for i := 0; i < l; i++ {
 		driver.SetButtonLamp(assigned_tasks[i].Type, assigned_tasks[i].Floor, 1)
+		fmt.Println("AMANGARER: Lamp set")
 	}
 
 	for {
@@ -69,6 +81,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					}
 				}
 				driver.SetButtonLamp(task_current.Type, task_current.Floor, 0)
+				fmt.Println("AMANGARER: Lamp set")
 
 				//Start on new task
 				if len(assigned_tasks > 0) {
@@ -111,6 +124,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				}
 			}
 			driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+			fmt.Println("AMANGARER: Lamp set")
 
 			//Reply to pmanager
 			select {
@@ -202,6 +216,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 					//Set local lights
 					driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
+					fmt.Println("AMANGARER: Lamp set")
 
 				} else {
 					fmt.Println("AMANAGER: could not deserialize task from udp!")
@@ -221,6 +236,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 						} else {
 							driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
 						}
+						fmt.Println("AMANGARER: Lamp set")
 					}
 				} else {
 					fmt.Println("AMANAGER: could not deserialize task from udp!")
@@ -235,7 +251,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 						fmt.Println("AMANAGER: was told an unassigned task has been assigned!")
 					}
 
-					//Send to pmanager
+					//Inform pmanager
 					select {
 					case pmanager_status_c <- task_new:
 					case <-time.After(time.Second):
@@ -249,6 +265,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 						} else {
 							driver.SetButtonLamp(task_current.Type, task_current.Floor, 1)
 						}
+						fmt.Println("AMANGARER: Lamp set")
 					}
 
 				} else {
@@ -261,7 +278,6 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 
 		default:
 		}
-
 	} //end of inf loop
 }
 

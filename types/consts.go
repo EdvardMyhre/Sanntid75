@@ -59,6 +59,7 @@ const (
 	//Message types used by task manager
 	MESSAGE_TYPE_DISTRIBUTE_NEWORDER        = (ID_MODULE_DISTRIBUTOR | 24) //xxx 11000
 	MESSAGE_TYPE_REQUEST_DISTRIBUTOR_STATUS = (ID_MODULE_DISTRIBUTOR | 20) //xxx 10100
+	GIVE_BACKUP                             = (ID_MODULE_AMANAGER | 30)    //xxx 11110
 
 	//Message types used by elevator controller
 
@@ -66,7 +67,7 @@ const (
 	GIVE_WEIGHT    = (ID_MODULE_DISTRIBUTOR | 18)  //xxx 10010
 	REQUEST_BACKUP = (ID_MODULE_TASK_MANAGER | 20) //xxx 10100
 	PUSH_BACKUP    = (ID_MODULE_TASK_MANAGER | 18) //xxx 10010
-	SET_LIGHT      = (ID_MODULE_AMANAGER | 24)     //xxx 11000
+	SET_LIGHT      = (ID_MODULE_AMANAGER | 18)     //xxx 10010
 	TASK_ASSIGNED  = (ID_MODULE_AMANAGER | 17)     //xxx 10001
 
 	//Message types used by network module

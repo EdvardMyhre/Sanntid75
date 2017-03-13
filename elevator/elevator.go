@@ -13,7 +13,8 @@ func Controller(statusc chan<- types.Status, taskc <-chan int) {
 	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 	floor_signal := 0
 	driver.SetFloorIndicator(0)
-	case statusc <- status
+	statusc <- status:
+
 
 
 	for {
