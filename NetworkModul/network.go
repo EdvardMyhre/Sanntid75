@@ -88,7 +88,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				if myBackupId == ""{
 					for i := 0; i < 5; i++{
 						send_message_is_my_backup_alive(id, message_sendCh)
-						mt.Println("sender melding om backup lever:    ", myBackupId)
+						fmt.Println("sender melding om backup lever:    ", myBackupId)
 					}
 					time.Sleep(200 * time.Millisecond)
 					if myBackupAlive == false {
