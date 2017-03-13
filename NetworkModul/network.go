@@ -98,11 +98,11 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				}
 				fmt.Println("Min id er:       ", id)
 				fmt.Println("Min backupid er: ", myBackupId)
-				fmt.Printf("Peer update:\n")
-				fmt.Printf("  Peers:    %q\n", p.Peers)
-				fmt.Printf("  Backup:   %q\n", p.Backup)
-				fmt.Printf("  New:      %q\n", p.New)
-				fmt.Printf("  Lost:     %q\n", p.Lost)
+				//fmt.Printf("Peer update:\n")
+				//fmt.Printf("  Peers:    %q\n", p.Peers)
+				//fmt.Printf("  Backup:   %q\n", p.Backup)
+				//fmt.Printf("  New:      %q\n", p.New)
+				//fmt.Printf("  Lost:     %q\n", p.Lost)
 
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
@@ -183,6 +183,7 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool,message_send
 func backup_for(id string, a structer.MainData, backupFor *[]string) {
 	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP){
 		*backupFor = append(*backupFor, a.Source)
+		fmt.Println("backup_for:    ", *backupFor)
 	}
 }
 
@@ -227,6 +228,7 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 	message.Data = append(message.Data, row1)
 	message.Data = append(message.Data, row2)
 	message_sendCh <- message
+	fmt.Println("send_message_is_my_backup_alive:    ", message)
 	/*for {
 		message_sendCh <- message
 		time.Sleep(1 * time.Second)
@@ -250,16 +252,19 @@ func message_receive_backup_alive(id string, m structer.MainData, backupFor []st
 					message.Data = append(message.Data, row1)
 					message.Data = append(message.Data, row2)
 					message_sendCh <- message
+					fmt.Println("send_message_is_my_backup_alive:    ", message)
 
 			}
 		}
 	}
+	fmt.Println("message_receive_backup_alive2")
 
 }
 
 func my_backup_is_alive(id string, myBackupAlive *bool, m structer.MainData) {
 	if (m.Destination == id) && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE){
 		*myBackupAlive = true
+		fmt.Println("my_backup_is_alive:    ", *myBackupAlive)
 	}
 
 }
