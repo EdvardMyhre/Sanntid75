@@ -14,6 +14,7 @@ func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- 
 	fmt.Println("Simulator Running: Button Intermediary for Pending Tasks and Backup manager")
 	
 	var message_output types.Button
+
 	
 	for{
 		random_number := rand.Intn(5)
@@ -21,11 +22,10 @@ func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- 
 		message_output.Floor = random_number
 		message_output.Type = random_command
 		time.Sleep(2*time.Second)
-		
 		select {
 			case send_chan <- message_output:
 			
-			case <-time.After(1*time.Second):
+			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 				fmt.Println("BUTTON INTERMEDIARY SEND FAIL")
 		}
 
@@ -39,21 +39,26 @@ func Test_pendingAndBackup_manager_buttonIntermediarySimulator(send_chan chan<- 
 func Test_pendingandBackup_manager_assignedSimulator(send_chan chan<- types.Task, rec_chan <-chan types.Task){
 	//Send add/remove input to pending tasks manager
 	var chan_message types.Task
+	var time_duration time.Time
 	
+	time_duration = time.Now()
 	for{
-		random_number := rand.Intn(5)
-		random_command := rand.Intn(3)
-		random_addremove := rand.Intn(2)
-		chan_message.Floor = random_number
-		chan_message.Type = random_command
-		chan_message.Assigned = random_addremove
-		time.Sleep(4*time.Second)
-		select {
-			case send_chan <- chan_message:
-			case <-time.After(1*time.Second):
-				fmt.Println("ASSIGNED SIMULATOR SEND FAIL")
+		if time.Since(time_duration) > 4*time.Second {
+			
+			random_number := rand.Intn(5)
+			random_command := rand.Intn(3)
+			random_addremove := rand.Intn(2)
+			chan_message.Floor = random_number
+			chan_message.Type = random_command
+			chan_message.Assigned = random_addremove
+			
+			select {
+				case send_chan <- chan_message:
+					time_duration = time.Now()
+				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+					fmt.Println("ASSIGNED SIMULATOR SEND FAIL")
+				}	
 		}
-		
 		select{
 			case chan_message := <- rec_chan:
 				fmt.Println("Received assigned task from pending manager: ",chan_message)
