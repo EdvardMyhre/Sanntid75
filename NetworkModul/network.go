@@ -86,11 +86,11 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 			select {
 			case p := <-peerUpdateCh:
 				if myBackupId == ""{
-					/*for i := 0; i < 5; i++{
+					for i := 0; i < 5; i++{
 						send_message_is_my_backup_alive(id, message_sendCh)
 						//fmt.Println("sender melding om backup lever:    ", myBackupId)
 					}
-					time.Sleep(200 * time.Millisecond)*/
+					time.Sleep(200 * time.Millisecond)
 					if myBackupAlive == false {
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 					}
@@ -187,13 +187,13 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 
 //--------------------------- Legger hvem du er backupfor i en liste ----------------------
 func backup_for(id string, a structer.MainData, backupFor *[]string) {
-	fmt.Println(" ")
+	/*fmt.Println(" ")
 	fmt.Println("Destination:          ", a.Destination)
 	fmt.Println("min id:               ", id)
 	k := a.Message_type & 31
 	fmt.Println("a.Message_type & 31:  ", k)
 	fmt.Println("messageid:            ", messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP)
-	fmt.Println(" ")
+	fmt.Println(" ")*/
 	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP){
 		*backupFor = append(*backupFor, a.Source)
 		fmt.Println("backup_for:    ", *backupFor)
