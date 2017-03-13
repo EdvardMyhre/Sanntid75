@@ -3,9 +3,9 @@ package main
 import (
 	"./NetworkModul"
 	"./NetworkModul/network/structer"
-	"./NetworkModul/network/messageid"
+	//"./NetworkModul/network/messageid"
 	"fmt"
-	"time"
+	//"time"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 							distri_to_n, p_task_manager_to_n, a_task_manager_to_n)
 
 
-	go func() {
+	/*go func() {
 		message := structer.MainData{}
 		message.Source = ""
 		message.Destination = "broadcast"
@@ -37,7 +37,7 @@ func main() {
 			distri_to_n <- message
 			time.Sleep(1 * time.Second)
 		}
-	}()
+	}()*/
 
 
 	 for {
