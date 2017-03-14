@@ -42,7 +42,7 @@ func main(){
 	go Tester.Test_pendingAndBackup_manager_buttonIntermediarySimulator(channel_button_intermediary_to_pending_tasks_manager)
 	go Tester.Test_pendingandBackup_manager_assignedSimulator(channel_assigned_tasks_manager_to_pending_tasks_manager, channel_pending_tasks_manager_to_assigned_tasks_manager)
 	go Tester.Test_pendingandBackup_manager_distributorSimulator(channel_distributor_to_pending_tasks_manager, channel_pending_tasks_manager_to_distributor)
-	
+	go Tester.Test_pendingandBackup_manager_networkSimulator(channel_network_module_to_backup_manager, channel_backup_manager_to_network_module)
 	
 	fmt.Println("Main function for Pending tasks manager. Connectivity test")
 	for{}
@@ -227,6 +227,7 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 					fmt.Println("Message to Distributor FAILED to send")
 			}		
 		}
+		time.Sleep(10*time.Millisecond)
 	}
 	
 }
@@ -241,7 +242,10 @@ type struct_backup_element struct {
 	
 }
 
-
+const (
+	TEMPREQUEST = 1
+	TEMPPUSH = 2
+)
 
 
 
@@ -249,16 +253,65 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 																			channel_to_pending_manager 	chan<- types.MainData){
 	//var message_maindata types.MainData
 //CREATE MATRIX
+	//var backup_matrix []struct_backup_element
+	var sendQueue_push []string
+	var sendQueue_request [] string
+	var sendQueue_pending_manager []string
 
 	for {
 //BEHAVIOR FOR RECEIVING FROM NETWORK
 		select {
 			case network_message := <- channel_from_network:
 				fmt.Println("Received something from network: ",network_message)
-				//if network_message.Message_type == 
+				if network_message.Type == TEMPREQUEST {
+					var command_already_exists bool
+					command_already_exists = false
+					for i := 0 ; i < len(sendQueue_request) ; i++ {
+						if sendQueue_request[i] == network_message.Source {
+							command_already_exists = true
+						}
+					}
+					if command_already_exists == false {
+						sendQueue_request = append(sendQueue_request, network_message.Source)
+						fmt.Println("Received NEW backup request message. Added to queue. Current queue: ",sendQueue_request)
+					}
+					
+				} else if network_message.Type == TEMPPUSH {
+					
+				} else if network_message.Type == types.BACKUP_LOST {
+					//Check if task is already in queue
+					var command_already_exists bool
+					command_already_exists = false
+					for i := 0 ; i< len(sendQueue_pending_manager) ; i++ {
+						if sendQueue_pending_manager[i] == network_message.Source {
+							command_already_exists = true
+							fmt.Println("Received an already exsting backup lost message. Duplicate NOT added to queue. Current queue: ",sendQueue_pending_manager)
+						}
+					}
+					if command_already_exists == false {
+						sendQueue_pending_manager = append(sendQueue_pending_manager, network_message.Source)
+						fmt.Println("Received new backup lost message. Current queue: ",sendQueue_pending_manager)
+					}
+				}
 			
 			default:
 			//Do nothing
+		}
+		
+//BEHAVIOR FOR SENDING TO NETWORK
+		//If there's a an order in network sendQueue
+		if len(sendQueue_push) > 0 {
+			
+		}
+		
+		if len(sendQueue_request) > 0 {
+			
+		}
+		
+//BEHAVIOR FOR SENDING TO PENDING MANAGER
+		//If there's an order in pending manager sendQueue
+		if len(sendQueue_pending_manager) > 0 {
+			
 		}
 //BEHAVIOR FOR SENDING TO NETWORK
 

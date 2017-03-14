@@ -60,11 +60,8 @@ const (
 	//Message types used by distributor
 	REQUEST_WEIGHT                       = (ID_MODULE_AMANAGER | 24) //xxx 11000
 	DISTRIBUTE_ORDER                     = (ID_MODULE_AMANAGER | 20) //xxx 10100
-	//MESSAGE_TYPE_GIVE_DISTRIBUTOR_STATUS = (ID_MODULE_TASK_MANAGER | 24)
 
 	//Message types used by task manager
-	//MESSAGE_TYPE_DISTRIBUTE_NEWORDER        = (ID_MODULE_DISTRIBUTOR | 24) //xxx 11000
-	//MESSAGE_TYPE_REQUEST_DISTRIBUTOR_STATUS = (ID_MODULE_DISTRIBUTOR | 20) //xxx 10100
 	GIVE_BACKUP                             = (ID_MODULE_AMANAGER | 30)    //xxx 11110
 
 	//Message types used by elevator controller
@@ -77,4 +74,6 @@ const (
 	TASK_ASSIGNED  = (ID_MODULE_AMANAGER | 17)     //xxx 10001
 
 	//Message types used by network module
+	BACKUP_LOST	   = (ID_MODULE_TASK_MANAGER | 24)
+	
 )
