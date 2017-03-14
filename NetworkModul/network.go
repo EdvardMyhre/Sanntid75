@@ -3,9 +3,8 @@ package network
 import (
 	"./network/bcast"
 	"./network/localip"
-	"./network/messageid"
 	"./network/peers"
-	"./network/structer"
+	"../types"
 	"flag"
 	"fmt"
 	"os"
@@ -14,8 +13,8 @@ import (
 	"time"
 )
 
-func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan structer.MainData, n_to_a_tasks_manager chan structer.MainData,
-	distri_to_n chan structer.MainData, p_task_manager_to_n chan structer.MainData, a_task_manager_to_n chan structer.MainData) {
+func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan types.MainData, n_to_a_tasks_manager chan types.MainData,
+	distri_to_n chan types.MainData, p_task_manager_to_n chan types.MainData, a_task_manager_to_n chan types.MainData) {
 
 	//-----------------------  Finner lokal ip og deklarerer myBackupId --------------------
 	id := find_localip()
@@ -23,15 +22,15 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 	myBackupAlive := false
 	backupFor := []string{}
 
-	var message_send structer.MainData
+	var message_send types.MainData
 
 	//-----------------------  Lager kanal som har oversikt over hvem som er i livet --------------------
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
 
 	//-----------------------  Lager kanaler for å sende og receive meldinger --------------------
-	message_sendCh := make(chan structer.MainData)
-	message_receivedCh := make(chan structer.MainData)
+	message_sendCh := make(chan types.MainData)
+	message_receivedCh := make(chan types.MainData)
 
 	//-----------------------  Sjekker hvem som er online --------------------
 	go peers.Transmitter(50018, id, peerTxEnable)
@@ -93,17 +92,17 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 			select{
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
-					switch a.Message_type & 224 {
-					case messageid.ID_MODULE_DISTRIBUTOR:
+					switch a.Type & 224 {
+					case types.ID_MODULE_DISTRIBUTOR:
 						n_to_distri <- a
 
-					case messageid.ID_MODULE_TASK_MANAGER:
+					case types.ID_MODULE_BACKUP_MANAGER:
 						n_to_p_task_manager <- a
 
-					case messageid.ID_MODULE_ELEVATOR_CONTROLLER:
+					case types.ID_MODULE_AMANAGER:
 						n_to_a_tasks_manager <- a
 
-					case messageid.ID_MODULE_NETWORK:
+					case types.ID_MODULE_NETWORK:
 						fmt.Println("NÅ kom meldingen:     ", a)
 						message_receive_is_my_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
@@ -117,7 +116,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 }
 
 //--------------------- Finner din backup  -----------------------------
-func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan structer.MainData, myBackupId *string) {
+func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan types.MainData, myBackupId *string) {
 
 	if len(p.Peers) > 1 {
 		for {
@@ -126,10 +125,10 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 				*myBackupAlive = true
 				*myBackupId = p.Peers[i]
 
-				message := structer.MainData{}
+				message := types.MainData{}
 				message.Source = id
 				message.Destination = *myBackupId
-				message.Message_type = messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP
+				message.Type = types.YOU_ARE_MY_BACKUP
 				row1 := []int{}
 				row2 := []int{}
 				message.Data = append(message.Data, row1)
@@ -144,8 +143,8 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 }
 
 //--------------------------- Legger hvem du er backupfor i en liste ----------------------
-func backup_for(id string, a structer.MainData, backupFor *[]string) {
-	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP) {
+func backup_for(id string, a types.MainData, backupFor *[]string) {
+	if (a.Destination == id) && ((a.Type & 31) == types.YOU_ARE_MY_BACKUP) {
 		*backupFor = append(*backupFor, a.Source)
 		//fmt.Println("oooooooooooooooooooooooooooooooooooooooooooooooo")
 		//fmt.Println("backup_for:    ", *backupFor)
@@ -171,11 +170,11 @@ func find_localip() string {
 }
 
 //-----------------------  Melding for å sjekke om man har en backup --------------------
-func send_message_is_my_backup_alive(id string, message_sendCh chan structer.MainData) {
-	message := structer.MainData{}
+func send_message_is_my_backup_alive(id string, message_sendCh chan types.MainData) {
+	message := types.MainData{}
 	message.Source = id
 	message.Destination = "broadcast"
-	message.Message_type = messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE
+	message.Type = types.IS_MY_BACKUP_ALIVE
 	row1 := []int{}
 	row2 := []int{}
 	message.Data = append(message.Data, row1)
@@ -184,14 +183,14 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 }
 
 //--------------------------- Min Backup lever ------------------------------
-func message_receive_is_my_backup_alive(id string, m structer.MainData, backupFor []string, message_sendCh chan structer.MainData) {
-	if (m.Destination == "broadcast") && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE) {
+func message_receive_is_my_backup_alive(id string, m types.MainData, backupFor []string, message_sendCh chan types.MainData) {
+	if (m.Destination == "broadcast") && ((m.Type & 31) == types.IS_MY_BACKUP_ALIVE) {
 		for i := range backupFor {
 			if backupFor[i] == m.Source {
-				message := structer.MainData{}
+				message := types.MainData{}
 				message.Source = id
 				message.Destination = m.Source
-				message.Message_type = messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE
+				message.Type = types.IS_MY_BACKUP_ALIVE_TRUE
 				row1 := []int{}
 				row2 := []int{}
 				message.Data = append(message.Data, row1)
@@ -204,8 +203,8 @@ func message_receive_is_my_backup_alive(id string, m structer.MainData, backupFo
 	}
 }
 
-func my_backup_is_alive(id string, myBackupAlive *bool, m structer.MainData) {
-	if (m.Destination == id) && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE) {
+func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData) {
+	if (m.Destination == id) && ((m.Type & 31) == types.IS_MY_BACKUP_ALIVE_TRUE) {
 		*myBackupAlive = true
 		//fmt.Println("my_backup_is_alive:    ", *myBackupAlive)
 	}
@@ -224,14 +223,14 @@ func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *stri
 }
 
 
-func is_who_i_am_backup_for_gone(backupFor []string, p peers.PeerUpdate, n_to_p_task_manager chan structer.MainData) {
+func is_who_i_am_backup_for_gone(backupFor []string, p peers.PeerUpdate, n_to_p_task_manager chan types.MainData) {
 	for i := range backupFor {
 		for j := range p.Lost {
 			if backupFor[i] == p.Lost[j] {
-				message := structer.MainData{}
+				message := types.MainData{}
 				message.Source = p.Lost[j]
 				message.Destination = ""
-				message.Message_type = messageid.BACKUP_LOST
+				message.Type = types.BACKUP_LOST
 				row1 := []int{}
 				row2 := []int{}
 				message.Data = append(message.Data, row1)

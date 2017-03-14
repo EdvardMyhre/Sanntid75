@@ -2,21 +2,21 @@ package main
 
 import (
 	"./NetworkModul"
-	"./NetworkModul/network/structer"
+	"./types"
 	//"./NetworkModul/network/messageid"
 	"fmt"
 	//"time"
 )
 
 func main() {
-	n_to_distri := make(chan structer.MainData)
-	n_to_p_task_manager := make(chan structer.MainData)
-	n_to_a_tasks_manager := make(chan structer.MainData)
+	n_to_distri := make(chan types.MainData)
+	n_to_p_task_manager := make(chan types.MainData)
+	n_to_a_tasks_manager := make(chan types.MainData)
 
 
-	distri_to_n := make(chan structer.MainData)
-	p_task_manager_to_n := make(chan structer.MainData)
-	a_task_manager_to_n := make(chan structer.MainData)
+	distri_to_n := make(chan types.MainData)
+	p_task_manager_to_n := make(chan types.MainData)
+	a_task_manager_to_n := make(chan types.MainData)
 
 
 	go network.Network_start(n_to_distri, n_to_p_task_manager, n_to_a_tasks_manager,
