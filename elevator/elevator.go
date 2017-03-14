@@ -122,7 +122,7 @@ func ButtonPoller(taskc chan<- types.Task) {
 						task.Floor = button_pushes_this_loop[i].Floor
 						select {
 						case taskc <- task:
-						case <-time.After(time.Second * 5):
+						case <-time.After(types.TIMEOUT_BUTTON_POLLER_WAITTIME):
 							fmt.Println("BUTTONPOLLER: button press lost!")
 						}
 					}

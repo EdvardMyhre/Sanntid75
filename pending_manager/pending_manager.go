@@ -1,10 +1,10 @@
-package main
+package pending_manager
 
 import (
 	"fmt"
 	"time"
 	//"../Tester"
-	"../backup_manager"
+	//"../backup_manager"
 	"../types"
 )
 
@@ -95,7 +95,7 @@ func Pending_task_manager(channel_from_button_intermediary <-chan types.Task,
 		//BEHAVIOR FOR RECEIVING FROM BUTTON POLLER
 		select {
 		case message_buttonOrder := <-channel_from_button_intermediary:
-			adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, 0, true)
+			adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, 0, false)
 		default:
 			//Do nothing
 
@@ -104,7 +104,7 @@ func Pending_task_manager(channel_from_button_intermediary <-chan types.Task,
 		//BEHAVIOR FOR RECEIVING FROM ASSIGNED TASKS MANAGER
 		select {
 		case message_buttonOrder := <-channel_from_assigned_tasks_manager:
-			adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, message_buttonOrder.Assigned, false)
+			adjust_pendinglist(message_buttonOrder.Type, message_buttonOrder.Floor, message_buttonOrder.Assigned, true)
 		default:
 			//Do nothing
 		}
@@ -173,7 +173,7 @@ func Pending_task_manager(channel_from_button_intermediary <-chan types.Task,
 				fmt.Println("SENT new order to assigned tasks manager: ", sendOrder)
 				adjust_pendinglist(sendOrder.Type, sendOrder.Floor, 0, true)
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
-				fmt.Println("SENT new order to assigned tasks manager FAILED DUE to TIMEOUT")
+				//fmt.Println("SENT new order to assigned tasks manager FAILED DUE to TIMEOUT")
 			}
 			if assigned_order_pendingList_startingIndex >= (len(pendingList) - 1) {
 				assigned_order_pendingList_startingIndex = 0
@@ -217,7 +217,7 @@ func Pending_task_manager(channel_from_button_intermediary <-chan types.Task,
 				fmt.Println("Message to Distributor SENT")
 				adjust_pendinglist(sendOrder.Type, sendOrder.Floor, 0, true)
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
-				fmt.Println("Message to Distributor FAILED to send")
+				//fmt.Println("Message to Distributor FAILED to send")
 			}
 		}
 		time.Sleep(10 * time.Millisecond)

@@ -39,7 +39,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	udp_tx_c <- msg_out
 Boot_loop:
 	for {
-		if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
+		if time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
 			fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
 			break Boot_loop
 		}
@@ -73,16 +73,18 @@ Boot_loop:
 				task_current.Finished = 255
 				tasks_temp = nil
 				index = 0
-				for {
-					if elev_status.Floor == assigned_tasks[index].Floor {
-						tasks_temp = append(tasks_temp, assigned_tasks[index])
-						assigned_tasks = append(assigned_tasks[:index], assigned_tasks[index+1:]...)
-						index--
+				if len(assigned_tasks) > 0 {
+					for {
+						if elev_status.Floor == assigned_tasks[index].Floor {
+							tasks_temp = append(tasks_temp, assigned_tasks[index])
+							assigned_tasks = append(assigned_tasks[:index], assigned_tasks[index+1:]...)
+							index--
+						}
+						if index == len(assigned_tasks)-1 {
+							break
+						}
+						index++
 					}
-					if index == len(assigned_tasks)-1 {
-						break
-					}
-					index++
 				}
 
 				//Push backup
@@ -95,7 +97,7 @@ Boot_loop:
 
 			Push_backup_1:
 				for {
-					if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
+					if time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
 						fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
 						break Push_backup_1
 					}
@@ -103,6 +105,9 @@ Boot_loop:
 					case msg_in = <-udp_rx_c:
 						backup_returned = slice2tasks(msg_in.Data)
 						alike = 255
+						if len(backup_returned) != len(assigned_tasks) {
+							break Push_backup_1
+						}
 						for i := 0; i < len(backup_returned); i++ {
 							if assigned_tasks[i] != backup_returned[i] {
 								alike = 0
@@ -126,17 +131,20 @@ Boot_loop:
 
 				//Delete cab commands before updating non-local lights
 				index = 0
-				for {
-					if tasks_temp[index].Type == types.BTN_TYPE_COMMAND {
-						time.Sleep(time.Second)
-						tasks_temp = append(tasks_temp[:index], tasks_temp[index+1:]...)
-						index--
+				if len(tasks_temp) > 0 {
+					for {
+						if tasks_temp[index].Type == types.BTN_TYPE_COMMAND {
+							time.Sleep(time.Second)
+							tasks_temp = append(tasks_temp[:index], tasks_temp[index+1:]...)
+							index--
+						}
+						if index == len(tasks_temp)-1 {
+							break
+						}
+						index++
 					}
-					if index == len(tasks_temp)-1 {
-						break
-					}
-					index++
 				}
+
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice(tasks_temp)}
 				select {
 				case udp_tx_c <- msg_out:
@@ -179,7 +187,7 @@ Boot_loop:
 			}
 		Push_backup_2:
 			for {
-				if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
+				if time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
 					fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
 					break Push_backup_2
 				}
@@ -187,6 +195,9 @@ Boot_loop:
 				case msg_in = <-udp_rx_c:
 					backup_returned = slice2tasks(msg_in.Data)
 					alike = 255
+					if len(backup_returned) != len(assigned_tasks) {
+						break Push_backup_2
+					}
 					for i := 0; i < len(backup_returned); i++ {
 						if assigned_tasks[i] != backup_returned[i] {
 							alike = 0
@@ -291,7 +302,7 @@ Boot_loop:
 					}
 				Push_backup_3:
 					for {
-						if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
+						if time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
 							fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
 							break Push_backup_3
 						}
@@ -299,6 +310,9 @@ Boot_loop:
 						case msg_in = <-udp_rx_c:
 							backup_returned = slice2tasks(msg_in.Data)
 							alike = 255
+							if len(backup_returned) != len(assigned_tasks) {
+								break Push_backup_3
+							}
 							for i := 0; i < len(backup_returned); i++ {
 								if assigned_tasks[i] != backup_returned[i] {
 									alike = 0
