@@ -59,9 +59,8 @@ const (
 	//Message types used by task manager
 	MESSAGE_TYPE_DISTRIBUTE_NEWORDER        = (ID_MODULE_DISTRIBUTOR | 24) //xxx 11000
 	MESSAGE_TYPE_REQUEST_DISTRIBUTOR_STATUS = (ID_MODULE_DISTRIBUTOR | 20) //xxx 10100
-	GIVE_BACKUP                             = (ID_MODULE_AMANAGER | 30)    //xxx 11110
-
-	//Message types used by elevator controller
+	GIVE_BACKUP                             = (ID_MODULE_AMANAGER | 30)    //xxx 11110 //Dette er ønsket svar på REQUEST_BACKUP. MainData.Data er den lagrede backupmatrisen
+	ACK_BACKUP                              = (ID_MODULE_AMANAGER | 29)    //xxx 11101 //Dette er ønsket svar på PUSH_BACKUP. MainData.Data er den lagrede backupmatrisen
 
 	//Message types used by assigned tasks manager
 	GIVE_WEIGHT    = (ID_MODULE_DISTRIBUTOR | 18)  //xxx 10010

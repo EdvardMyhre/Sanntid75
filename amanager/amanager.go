@@ -32,35 +32,55 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	msg_out.Destination = "backup"
 	msg_out.Type = types.REQUEST_BACKUP
 
-	recieve_tries := 10
-	send_tries := 10
-	loaded := 0
-	fmt.Println("AMANAGER: Sending request for backup")
-
-	for j := 0; j < send_tries; j++ {
-		if loaded == 1 {
+	time_start := time.Now()
+	millis_max := time.Millisecond * 200
+	millis_retry := time.Millisecond * 10
+	udp_tx_c <- msg_out
+	for {
+		millis_spent := time.Since(time.Now()).Milliseconds() - time.Since(time_start).Milliseconds()
+		if millis_spent >= millis_max {
+			fmt.Println("AMANAGER: No backup! Tasks might have been lost...")
 			break
 		}
+		select {
+		case msg_in <- udp_rx_c:
+			if msg_in.Type == types.GIVE_BACKUP {
+				assigned_tasks = slice2tasks(msg_in.Data)
 
-		udp_tx_c <- msg_out
-		for i := 0; i < recieve_tries; i++ {
-			if loaded == 1 {
-				break
-			}
-			select {
-			case msg_in = <-udp_rx_c:
-				if msg_in.Type == types.GIVE_BACKUP {
-					assigned_tasks = slice2tasks(msg_in.Data)
-					loaded = 1
-				}
-			case <-time.After(time.Second):
-				if i == recieve_tries-1 {
-					fmt.Println("AMANAGER: Resending request for backup")
-				}
 			}
 		}
+
 	}
-	if loaded > 0 {
+
+	// recieve_tries := 10
+	// send_tries := 10
+	// loaded := 0
+	// fmt.Println("AMANAGER: Sending request for backup")
+
+	// for j := 0; j < send_tries; j++ {
+	// 	if loaded == 1 {
+	// 		break
+	// 	}
+
+	// 	udp_tx_c <- msg_out
+	// 	for i := 0; i < recieve_tries; i++ {
+	// 		if loaded == 1 {
+	// 			break
+	// 		}
+	// 		select {
+	// 		case msg_in = <-udp_rx_c:
+	// 			if msg_in.Type == types.GIVE_BACKUP {
+	// 				assigned_tasks = slice2tasks(msg_in.Data)
+	// 				loaded = 1
+	// 			}
+	// 		case <-time.After(time.Second):
+	// 			if i == recieve_tries-1 {
+	// 				fmt.Println("AMANAGER: Resending request for backup")
+	// 			}
+	// 		}
+	// 	}
+	// }
+	if loaded != 0 {
 		fmt.Println("AMANAGER: Backup loaded")
 	} else {
 		fmt.Println("AMANAGER: No backup! TASKS ARE LOST")
@@ -102,6 +122,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 				for i := 0; i < len(tasks_temp); i++ {
 					driver.SetButtonLamp(tasks_temp[i].Type, tasks_temp[i].Floor, 0)
 				}
+
 				//Delete cab commands before updating non-local lights
 				for i := 0; i < len(tasks_temp); i++ {
 					if tasks_temp[i].Type == types.BTN_TYPE_COMMAND {
@@ -133,7 +154,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 			}
 		}
 
-		//Input from pmanager, i.e new task from pmanager, command from cab or timed out tasks!
+		//Input from pmanager, i.e new task from pmanager, command from cab or timed-out tasks
 		select {
 		case task_new = <-pmanager_task_c:
 			if task_new.Assigned != 0 {
@@ -282,7 +303,7 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 					fmt.Println("AMANAGER: could not deserialize task from udp!")
 				}
 
-			//A task has been assigned to another elevator, we inform pmanager and set lights
+			//A task has been assigned to another elevator
 			case types.TASK_ASSIGNED:
 				tasks_temp = nil
 				tasks_temp = slice2tasks(msg_in.Data)
