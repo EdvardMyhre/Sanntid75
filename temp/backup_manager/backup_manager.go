@@ -135,8 +135,31 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 			}
 			
 		}
-//BEHAVIOR FoR SENDING "REQUEST" RESPONSE TO NETWORK		
+//BEHAVIOR FOR SENDING "REQUEST" RESPONSE TO NETWORK		
 		if len(sendQueue_request) > 0 {
+			var request_index int
+			var request_backup_exists bool
+			request_backup_exists = false
+			for i := 0 ; i<len(backup_matrix) ; i++ {
+				if backup_matrix[i].BackupIP == sendQueue_request[0] {
+					request_index = i
+					request_backup_exists = true
+					break
+				}
+			}
+			
+			var request_message types.MainData
+			request_message.Destination = sendQueue_request[0]
+			if request_backup_exists {
+				request_message.Data = backup_matrix[request_index].BackupData
+			}
+			select{
+				case channel_to_network <- request_message:
+				fmt.Println("Sent request response back to: ",sendQueue_request[0])
+				sendQueue_request = append(sendQueue_request[:0])
+				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+			}
+			
 			
 		}
 		
