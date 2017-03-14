@@ -56,7 +56,7 @@ func Controller(taskc <-chan int, statusc chan<- types.Status) {
 				driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 			}
 		}
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(types.PAUSE_ELEVATOR)
 	}
 
 }
@@ -129,7 +129,7 @@ func ButtonPoller(taskc chan<- types.Task) {
 				}
 			}
 		}
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(types.PAUSE_ELEVATOR)
 	}
 }
 

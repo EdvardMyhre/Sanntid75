@@ -86,7 +86,6 @@ Boot_loop:
 				}
 
 				//Push backup
-				fmt.Println("AMANAGER: pushing backup")
 				msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
 				time_start = time.Now()
 				select {
@@ -111,7 +110,6 @@ Boot_loop:
 							}
 						}
 						if msg_in.Type == types.ACK_BACKUP && alike != 0 {
-							fmt.Println("AMANGER: backup acknowledged")
 							break Push_backup_1
 						}
 					case <-time.After(types.RETRY_BACKUP_RESPONSE):
@@ -142,7 +140,7 @@ Boot_loop:
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice(tasks_temp)}
 				select {
 				case udp_tx_c <- msg_out:
-				case <-time.After(types.TIMEOUT_AMANAGER):
+				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 					fmt.Println("AMANAGER: network not responding!")
 				}
 
@@ -153,11 +151,10 @@ Boot_loop:
 		//Start on new task if we finished the last
 		if task_current.Finished != 0 {
 			if len(assigned_tasks) > 0 {
-				fmt.Println("AMANAGER: starting on new task")
 				task_current = assigned_tasks[0]
 				select {
 				case elev_task_c <- task_current.Floor:
-				case <-time.After(types.TIMEOUT_AMANAGER):
+				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
 				}
 			}
@@ -211,7 +208,7 @@ Boot_loop:
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice([]types.Task{task_new})}
 				select {
 				case udp_tx_c <- msg_out:
-				case <-time.After(types.TIMEOUT_AMANAGER):
+				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 					fmt.Println("AMANAGER: network not responding!")
 				}
 			}
@@ -220,7 +217,7 @@ Boot_loop:
 			//Reply to pmanager
 			select {
 			case pmanager_status_c <- task_new:
-			case <-time.After(types.TIMEOUT_AMANAGER):
+			case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 				fmt.Println("AMANAGER: pmanager not responding!")
 			}
 		case <-time.After(types.PAUSE_AMAGER):
@@ -244,7 +241,7 @@ Boot_loop:
 					}
 					select {
 					case pmanager_status_c <- task_new:
-					case <-time.After(types.TIMEOUT_AMANAGER):
+					case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 						fmt.Println("AMANAGER: pmanager not responding!")
 					}
 
@@ -262,7 +259,7 @@ Boot_loop:
 					msg_out.Data = data_temp
 					select {
 					case udp_tx_c <- msg_out:
-					case <-time.After(types.TIMEOUT_AMANAGER):
+					case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 						fmt.Println("AMANAGER: network not responding!")
 					}
 
@@ -286,7 +283,6 @@ Boot_loop:
 					_, assigned_tasks = addTask(assigned_tasks, task_new, elev_status)
 
 					//Push backup
-					fmt.Println("AMANAGER: pushing backup")
 					msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
 					time_start = time.Now()
 					select {
@@ -310,7 +306,6 @@ Boot_loop:
 								}
 							}
 							if msg_in.Type == types.ACK_BACKUP && alike != 0 {
-								fmt.Println("AMANGER: backup acknowledged")
 								break Push_backup_3
 							}
 						case <-time.After(types.RETRY_BACKUP_RESPONSE):
@@ -322,7 +317,7 @@ Boot_loop:
 					//Send to pmanager
 					select {
 					case pmanager_status_c <- task_new:
-					case <-time.After(types.TIMEOUT_AMANAGER):
+					case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 						fmt.Println("AMANAGER: pmanager not responding!")
 					}
 
@@ -330,7 +325,7 @@ Boot_loop:
 					msg_out = types.MainData{Destination: "broadcast", Type: types.TASK_ASSIGNED, Data: tasks2slice([]types.Task{task_new})}
 					select {
 					case udp_tx_c <- msg_out:
-					case <-time.After(types.TIMEOUT_AMANAGER):
+					case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 						fmt.Println("AMANAGER: network not responding!")
 					}
 
@@ -377,7 +372,7 @@ Boot_loop:
 					//Inform pmanager
 					select {
 					case pmanager_status_c <- task_new:
-					case <-time.After(types.TIMEOUT_AMANAGER):
+					case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 						fmt.Println("AMANAGER: pmanager not responding!")
 					}
 
@@ -396,7 +391,7 @@ Boot_loop:
 				}
 
 			default:
-				fmt.Println("AMANAGER: message from udp unreconisible!")
+				fmt.Println("AMANAGER: message from udp unrecognisable!")
 			}
 
 		case <-time.After(types.PAUSE_AMAGER):

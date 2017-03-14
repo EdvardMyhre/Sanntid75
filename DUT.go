@@ -74,8 +74,7 @@ func main() {
 					case <-time.After(time.Second * 10):
 						fmt.Println("MAIN: Could not acknowledge backup")
 					}
-					fmt.Println("AMANAGER: pushed backup:")
-					fmt.Println(udp_in.Data)
+					fmt.Println("AMANAGER: pushed backup:", udp_in.Data)
 				}
 				tries_push++
 

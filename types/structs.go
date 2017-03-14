@@ -23,7 +23,7 @@ type Status struct {
 	Between_floors    int
 }
 
-type MainData struct { // Dette som sendes mellom heisene og legges i backoup
+type MainData struct {
 	Source      string
 	Destination string
 	Type        int

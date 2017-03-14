@@ -3,7 +3,7 @@ package backup_manager
 import (
 	"fmt"
 	"time"
-	"../../types"
+	"../types"
 )
 
 
@@ -14,14 +14,6 @@ type struct_backup_element struct {
 	
 	
 }
-
-const (
-	TEMPREQUEST = 1
-	TEMPPUSH = 2
-)
-
-
-
 func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_network 			chan<- types.MainData,
 																			channel_to_pending_manager 	chan<- types.MainData){
 	//var message_maindata types.MainData
@@ -37,7 +29,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 			case network_message := <- channel_from_network:
 				fmt.Println("Received something from network: ",network_message)
 		//"REQUEST BACKUP" RECEIVED
-				if network_message.Type == TEMPREQUEST {
+				if network_message.Type == types.GIVE_BACKUP {
 					var request_command_already_exists bool
 					request_command_already_exists = false
 					for i := 0 ; i < len(sendQueue_request) ; i++ {
@@ -53,7 +45,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 				
 
 		//"PUSH BACKUP" RECEIVED		
-				} else if network_message.Type == TEMPPUSH {
+				} else if network_message.Type == types.ACK_BACKUP {
 					var backup_already_exists bool
 					var push_command_already_exists bool
 					backup_already_exists = false
