@@ -85,7 +85,12 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
 				fmt.Println("backupFor:              ", backupFor)
 				fmt.Println("")
-
+			}
+		}
+	}()
+	go func() {
+		for {
+			select{
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
 					switch a.Message_type & 224 {
