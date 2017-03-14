@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 	//"../../Network"
-	"../../types"
+	"../types"
 	"math/rand"
 )
 

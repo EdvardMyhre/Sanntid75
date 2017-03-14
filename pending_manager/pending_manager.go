@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"time"
-	"./Tester"
+	"../Tester"
 	"../types"
-	"./backup_manager"
+	"../backup_manager"
 )
 
 func main(){

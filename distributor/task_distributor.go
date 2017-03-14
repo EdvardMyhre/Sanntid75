@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
-	"./Tester"
+	"../Tester"
 	//"../Network"
 	"../types"
 )
