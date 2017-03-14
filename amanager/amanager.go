@@ -15,12 +15,13 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	var msg_out types.MainData
 	var assigned_tasks []types.Task
 	var tasks_temp []types.Task
+	var backup_returned []types.Task
 	var data_temp [][]int
 	var task_new types.Task
 	var task_current types.Task
-	var nanos_max int64
-	var nanos_retry time.Duration
 	var time_start time.Time
+	var alike int
+	var index int
 
 	elev_status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 	weight := 255
@@ -32,19 +33,13 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 		}
 	}
 
-	msg_out.Destination = "backup"
-	msg_out.Type = types.REQUEST_BACKUP
-
-	time_start = time.Now()
-	//Multiplying by 10**6 and then the number of millis desired
-	nanos_max = 1000000 * 1000
-	nanos_retry = time.Nanosecond * 1000000 * 10
-
 	fmt.Println("AMANAGER: requesting backup")
+	msg_out = types.MainData{Destination: "backup", Type: types.REQUEST_BACKUP}
+	time_start = time.Now()
 	udp_tx_c <- msg_out
 Boot_loop:
 	for {
-		if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= nanos_max {
+		if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
 			fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
 			break Boot_loop
 		}
@@ -55,7 +50,7 @@ Boot_loop:
 				fmt.Println("AMANGER: backup loaded")
 				break Boot_loop
 			}
-		case <-time.After(nanos_retry):
+		case <-time.After(types.RETRY_BACKUP_RESPONSE):
 			fmt.Println("AMANAGER: requesting backup, retry")
 			udp_tx_c <- msg_out
 		}
@@ -77,78 +72,82 @@ Boot_loop:
 				//Update assigned tasks
 				task_current.Finished = 255
 				tasks_temp = nil
-				for i := 0; i < len(assigned_tasks); i++ {
-					if elev_status.Floor == assigned_tasks[i].Floor {
-						tasks_temp = append(tasks_temp, assigned_tasks[i])
-						assigned_tasks = append(assigned_tasks[:i], assigned_tasks[i+1:]...)
-						i--
+				index = 0
+				for {
+					if elev_status.Floor == assigned_tasks[index].Floor {
+						tasks_temp = append(tasks_temp, assigned_tasks[index])
+						assigned_tasks = append(assigned_tasks[:index], assigned_tasks[index+1:]...)
+						index--
 					}
+					if index == len(assigned_tasks)-1 {
+						break
+					}
+					index++
 				}
 
 				//Push backup
-				msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
-				//
-				time_start = time.Now()
-				//Multiplying by 10**6 and then the number of millis desired
-				nanos_max = 1000000 * 200
-				nanos_retry = time.Nanosecond * 1000000 * 10
 				fmt.Println("AMANAGER: pushing backup")
+				msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
+				time_start = time.Now()
 				select {
 				case udp_tx_c <- msg_out:
-				case <-time.After(nanos_retry):
+				case <-time.After(types.RETRY_BACKUP_RESPONSE):
 				}
-			Push_backup_loop:
+
+			Push_backup_1:
 				for {
-					if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= nanos_max {
+					if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
 						fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
-						break Push_backup_loop
+						break Push_backup_1
 					}
 					select {
 					case msg_in = <-udp_rx_c:
-						tasks_temp = slice2tasks(msg_in.Data)
-						like := 255
-						for i := 0; i < len(tasks_temp); i++ {
-							if assigned_tasks[i] != tasks_temp[i] {
-								like = 0
+						backup_returned = slice2tasks(msg_in.Data)
+						alike = 255
+						for i := 0; i < len(backup_returned); i++ {
+							if assigned_tasks[i] != backup_returned[i] {
+								alike = 0
+								break
 							}
 						}
-						if msg_in.Type == types.ACK_BACKUP && like != 0 {
+						if msg_in.Type == types.ACK_BACKUP && alike != 0 {
 							fmt.Println("AMANGER: backup acknowledged")
-							break Push_backup_loop
+							break Push_backup_1
 						}
-					case <-time.After(nanos_retry):
+					case <-time.After(types.RETRY_BACKUP_RESPONSE):
 						fmt.Println("AMANAGER: pushing backup, retry")
 						udp_tx_c <- msg_out
 					}
 				}
-				//
-				// select {
-				// case udp_tx_c <- msg_out:
-				// case <-time.After(time.Second):
-				// 	fmt.Println("AMANAGER: network not responding!")
-				// }
 
 				//Update local lights
 				for i := 0; i < len(tasks_temp); i++ {
+					fmt.Println("AMANAGER: Updating local lights")
 					driver.SetButtonLamp(tasks_temp[i].Type, tasks_temp[i].Floor, 0)
 				}
 
 				//Delete cab commands before updating non-local lights
-				for i := 0; i < len(tasks_temp); i++ {
-					if tasks_temp[i].Type == types.BTN_TYPE_COMMAND {
-						tasks_temp = append(tasks_temp[i:], tasks_temp[i+1:]...)
-						i--
+				index = 0
+				for {
+					if tasks_temp[index].Type == types.BTN_TYPE_COMMAND {
+						time.Sleep(time.Second)
+						tasks_temp = append(tasks_temp[:index], tasks_temp[index+1:]...)
+						index--
 					}
+					if index == len(tasks_temp)-1 {
+						break
+					}
+					index++
 				}
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice(tasks_temp)}
 				select {
 				case udp_tx_c <- msg_out:
-				case <-time.After(time.Second):
+				case <-time.After(types.TIMEOUT_AMANAGER):
 					fmt.Println("AMANAGER: network not responding!")
 				}
 
 			}
-		case <-time.After(time.Millisecond * 10):
+		case <-time.After(types.PAUSE_AMAGER):
 		}
 
 		//Start on new task if we finished the last
@@ -158,7 +157,7 @@ Boot_loop:
 				task_current = assigned_tasks[0]
 				select {
 				case elev_task_c <- task_current.Floor:
-				case <-time.After(time.Second):
+				case <-time.After(types.TIMEOUT_AMANAGER):
 					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
 				}
 			}
@@ -174,11 +173,37 @@ Boot_loop:
 			_, assigned_tasks = addTask(assigned_tasks, task_new, elev_status)
 
 			//Push backup
+			fmt.Println("AMANAGER: pushing backup")
 			msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
+			time_start = time.Now()
 			select {
 			case udp_tx_c <- msg_out:
-			case <-time.After(time.Second):
-				fmt.Println("AMANAGER: network not responding!")
+			case <-time.After(types.RETRY_BACKUP_RESPONSE):
+			}
+		Push_backup_2:
+			for {
+				if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
+					fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
+					break Push_backup_2
+				}
+				select {
+				case msg_in = <-udp_rx_c:
+					backup_returned = slice2tasks(msg_in.Data)
+					alike = 255
+					for i := 0; i < len(backup_returned); i++ {
+						if assigned_tasks[i] != backup_returned[i] {
+							alike = 0
+							break
+						}
+					}
+					if msg_in.Type == types.ACK_BACKUP && alike != 0 {
+						fmt.Println("AMANGER: backup acknowledged")
+						break Push_backup_2
+					}
+				case <-time.After(types.RETRY_BACKUP_RESPONSE):
+					fmt.Println("AMANAGER: pushing backup, retry")
+					udp_tx_c <- msg_out
+				}
 			}
 
 			//Update lights
@@ -186,7 +211,7 @@ Boot_loop:
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice([]types.Task{task_new})}
 				select {
 				case udp_tx_c <- msg_out:
-				case <-time.After(time.Second):
+				case <-time.After(types.TIMEOUT_AMANAGER):
 					fmt.Println("AMANAGER: network not responding!")
 				}
 			}
@@ -195,10 +220,10 @@ Boot_loop:
 			//Reply to pmanager
 			select {
 			case pmanager_status_c <- task_new:
-			case <-time.After(time.Second):
+			case <-time.After(types.TIMEOUT_AMANAGER):
 				fmt.Println("AMANAGER: pmanager not responding!")
 			}
-		case <-time.After(time.Millisecond * 10):
+		case <-time.After(types.PAUSE_AMAGER):
 		}
 
 		//Message from udp
@@ -219,7 +244,7 @@ Boot_loop:
 					}
 					select {
 					case pmanager_status_c <- task_new:
-					case <-time.After(time.Second):
+					case <-time.After(types.TIMEOUT_AMANAGER):
 						fmt.Println("AMANAGER: pmanager not responding!")
 					}
 
@@ -237,7 +262,7 @@ Boot_loop:
 					msg_out.Data = data_temp
 					select {
 					case udp_tx_c <- msg_out:
-					case <-time.After(time.Second):
+					case <-time.After(types.TIMEOUT_AMANAGER):
 						fmt.Println("AMANAGER: network not responding!")
 					}
 
@@ -261,17 +286,43 @@ Boot_loop:
 					_, assigned_tasks = addTask(assigned_tasks, task_new, elev_status)
 
 					//Push backup
+					fmt.Println("AMANAGER: pushing backup")
 					msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
+					time_start = time.Now()
 					select {
 					case udp_tx_c <- msg_out:
-					case <-time.After(time.Second):
-						fmt.Println("AMANAGER: network not responding!")
+					case <-time.After(types.RETRY_BACKUP_RESPONSE):
+					}
+				Push_backup_3:
+					for {
+						if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= types.TIMEOUT_BACKUP_RESPONSE {
+							fmt.Println("AMANAGER: could not reach backup! Tasks might have been lost...")
+							break Push_backup_3
+						}
+						select {
+						case msg_in = <-udp_rx_c:
+							backup_returned = slice2tasks(msg_in.Data)
+							alike = 255
+							for i := 0; i < len(backup_returned); i++ {
+								if assigned_tasks[i] != backup_returned[i] {
+									alike = 0
+									break
+								}
+							}
+							if msg_in.Type == types.ACK_BACKUP && alike != 0 {
+								fmt.Println("AMANGER: backup acknowledged")
+								break Push_backup_3
+							}
+						case <-time.After(types.RETRY_BACKUP_RESPONSE):
+							fmt.Println("AMANAGER: pushing backup, retry")
+							udp_tx_c <- msg_out
+						}
 					}
 
 					//Send to pmanager
 					select {
 					case pmanager_status_c <- task_new:
-					case <-time.After(time.Second):
+					case <-time.After(types.TIMEOUT_AMANAGER):
 						fmt.Println("AMANAGER: pmanager not responding!")
 					}
 
@@ -279,7 +330,7 @@ Boot_loop:
 					msg_out = types.MainData{Destination: "broadcast", Type: types.TASK_ASSIGNED, Data: tasks2slice([]types.Task{task_new})}
 					select {
 					case udp_tx_c <- msg_out:
-					case <-time.After(time.Second):
+					case <-time.After(types.TIMEOUT_AMANAGER):
 						fmt.Println("AMANAGER: network not responding!")
 					}
 
@@ -326,7 +377,7 @@ Boot_loop:
 					//Inform pmanager
 					select {
 					case pmanager_status_c <- task_new:
-					case <-time.After(time.Second):
+					case <-time.After(types.TIMEOUT_AMANAGER):
 						fmt.Println("AMANAGER: pmanager not responding!")
 					}
 
@@ -348,7 +399,7 @@ Boot_loop:
 				fmt.Println("AMANAGER: message from udp unreconisible!")
 			}
 
-		case <-time.After(time.Millisecond * 10):
+		case <-time.After(types.PAUSE_AMAGER):
 		}
 	} //end of inf loop
 }

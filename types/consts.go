@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 const (
 	ElevatorType = 0 //1 is simulation, 0 is comedi
 )
@@ -33,6 +35,11 @@ const (
 
 const (
 	TIMEOUT_MESSAGE_RESPONSE = 2.5
+	//The wait times reagarding backup over udp. Multiplying by 10**6 and then the number of millis desired
+	TIMEOUT_BACKUP_RESPONSE = int64(1000000 * 500)
+	RETRY_BACKUP_RESPONSE   = 1000000 * 10 * time.Nanosecond
+	TIMEOUT_AMANAGER        = 1000000 * 500 * time.Nanosecond
+	PAUSE_AMAGER            = 1000000 * 10 * time.Nanosecond
 )
 
 const (
