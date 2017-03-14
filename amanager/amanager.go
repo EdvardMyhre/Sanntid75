@@ -33,25 +33,26 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	msg_out.Type = types.REQUEST_BACKUP
 
 	time_start := time.Now()
-	millis_max := time.Millisecond * 200
-	millis_retry := time.Millisecond * 10
+	//Multiplying by 10**6 and then the number of millis desired
+	var nanos_max int64
+	nanos_max = 1000000 * 200
+	nanos_retry := time.Nanosecond * 1000000 * 10
 
 	udp_tx_c <- msg_out
 Boot_loop:
 	for {
-		millis_spent := time.Since(time.Now()).Milliseconds() - time.Since(time_start).Milliseconds()
-		if millis_spent >= millis_max {
+		if time.Since(time.Now()).Nanoseconds()-time.Since(time_start).Nanoseconds() >= nanos_max {
 			fmt.Println("AMANAGER: Could not reach backup! Tasks might have been lost...")
 			break Boot_loop
 		}
 		select {
-		case msg_in <- udp_rx_c:
+		case msg_in = <-udp_rx_c:
 			if msg_in.Type == types.GIVE_BACKUP {
 				assigned_tasks = slice2tasks(msg_in.Data)
 				fmt.Println("AMANGER: backup loaded")
 				break Boot_loop
 			}
-		case <-time.After(millis_retry):
+		case <-time.After(nanos_retry):
 			udp_tx_c <- msg_out
 		}
 	}
