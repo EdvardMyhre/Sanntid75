@@ -11,7 +11,7 @@ import (
 	"os"
 	//"sort"
 	"math/rand"
-	"time"
+	//"time"
 )
 
 func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan structer.MainData, n_to_a_tasks_manager chan structer.MainData,
@@ -90,7 +90,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				fmt.Println("")*/
 
 				fmt.Printf("Peer update:\n")
-				fmt.Printf("  Peers:    %q\n", p.Peers))
+				fmt.Printf("  Peers:    %q\n", p.Peers)
 				fmt.Printf("  New:      %q\n", p.New)
 				fmt.Printf("  Lost:     %q\n", p.Lost)
 
