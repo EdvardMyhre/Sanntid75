@@ -70,17 +70,17 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 			select {
 			case p := <-peerUpdateCh:
 				if myBackupId == "" {
-					for i := 0; i < 5; i++ {
+					//for i := 0; i < 5; i++ {
 						send_message_is_my_backup_alive(id, message_sendCh)
-					}
+					//}
 					time.Sleep(200 * time.Millisecond)
 					if myBackupAlive == false {
-						fmt.Println("leter etter backup da.....................")
+						//fmt.Println("leter etter backup da.....................")
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 
 					}
 				}
-				//my_backup_is_gone(&myBackupAlive, backupFor, p, &myBackupId)
+				my_backup_is_gone(&myBackupAlive, backupFor, p, &myBackupId)
 				time.Sleep(1000 * time.Millisecond)
 				fmt.Println("Min id er:              ", id)
 				fmt.Println("Min backupid er:        ", myBackupId)
@@ -115,6 +115,8 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 
 //--------------------- Finner din backup  -----------------------------
 func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan structer.MainData, myBackupId *string) {
+	fmt.Println("inne i find_backup xxxx---------------------")
+
 	if len(p.Peers) > 1 {
 		for {
 			i := rand.Intn(len(p.Peers))
