@@ -104,6 +104,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 						message_receive_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
+						fmt.Println("backupFor:              ", backupFor)
 					}
 				}
 			}
@@ -132,7 +133,7 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 				//fmt.Println("find_backup: ", message)
 				//time.Sleep(50 * time.Millisecond)
 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-				//return
+				return
 			}
 		}
 	}
@@ -142,7 +143,7 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 func backup_for(id string, a structer.MainData, backupFor *[]string) {
 	if (a.Destination == id) && ((a.Message_type & 31) == messageid.ID_MSG_TYPE_YOU_ARE_MY_BACKUP) {
 		*backupFor = append(*backupFor, a.Source)
-		fmt.Println("oooooooooooooooooooooooooooooooooooooooooooooooo")
+		//fmt.Println("oooooooooooooooooooooooooooooooooooooooooooooooo")
 		//fmt.Println("backup_for:    ", *backupFor)
 	}
 }
