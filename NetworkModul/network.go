@@ -81,11 +81,11 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				}
 
 				my_backup_is_gone(&myBackupAlive, backupFor, p, &myBackupId)
-				fmt.Println("Min id er:              ", id)
+				/*fmt.Println("Min id er:              ", id)
 				fmt.Println("Min backupid er:        ", myBackupId)
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
-				//fmt.Println("backupFor:              ", backupFor)
-				fmt.Println("")
+				fmt.Println("backupFor:              ", backupFor)
+				fmt.Println("")*/
 
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
@@ -104,7 +104,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 						message_receive_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
-						fmt.Println("backupFor:              ", backupFor)
+						//fmt.Println("backupFor:              ", backupFor)
 					}
 				}
 			}
@@ -114,7 +114,6 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 
 //--------------------- Finner din backup  -----------------------------
 func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan structer.MainData, myBackupId *string) {
-	fmt.Println("inne i find_backup xxxx---------------------")
 
 	if len(p.Peers) > 1 {
 		for {
@@ -178,7 +177,6 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 	message.Data = append(message.Data, row1)
 	message.Data = append(message.Data, row2)
 	message_sendCh <- message
-	fmt.Println("-------------------------------------------------")
 }
 
 //--------------------------- Min Backup lever ------------------------------
@@ -195,7 +193,7 @@ func message_receive_backup_alive(id string, m structer.MainData, backupFor []st
 				message.Data = append(message.Data, row1)
 				message.Data = append(message.Data, row2)
 				message_sendCh <- message
-				fmt.Println("message_receive_backup_alive:    ", message)
+				//fmt.Println("message_receive_backup_alive:    ", message)
 
 			}
 		}
@@ -205,7 +203,7 @@ func message_receive_backup_alive(id string, m structer.MainData, backupFor []st
 func my_backup_is_alive(id string, myBackupAlive *bool, m structer.MainData) {
 	if (m.Destination == id) && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE) {
 		*myBackupAlive = true
-		fmt.Println("my_backup_is_alive:    ", *myBackupAlive)
+		//fmt.Println("my_backup_is_alive:    ", *myBackupAlive)
 	}
 
 }
