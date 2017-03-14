@@ -73,8 +73,9 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 					for i := 0; i < 5; i++ {
 						send_message_is_my_backup_alive(id, message_sendCh)
 					}
-					//time.Sleep(200 * time.Millisecond)
+					time.Sleep(200 * time.Millisecond)
 					if myBackupAlive == false {
+						fmt.Println("leter etter backup da.....................")
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 
 					}
@@ -132,7 +133,6 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 				message_sendCh <- message
 				//fmt.Println("find_backup: ", message)
 				//time.Sleep(50 * time.Millisecond)
-				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 				return
 			}
 		}
