@@ -35,58 +35,28 @@ func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- 
 	time_start := time.Now()
 	millis_max := time.Millisecond * 200
 	millis_retry := time.Millisecond * 10
+
 	udp_tx_c <- msg_out
+Boot_loop:
 	for {
 		millis_spent := time.Since(time.Now()).Milliseconds() - time.Since(time_start).Milliseconds()
 		if millis_spent >= millis_max {
-			fmt.Println("AMANAGER: No backup! Tasks might have been lost...")
-			break
+			fmt.Println("AMANAGER: Could not reach backup! Tasks might have been lost...")
+			break Boot_loop
 		}
 		select {
 		case msg_in <- udp_rx_c:
 			if msg_in.Type == types.GIVE_BACKUP {
 				assigned_tasks = slice2tasks(msg_in.Data)
-
+				fmt.Println("AMANGER: backup loaded")
+				break Boot_loop
 			}
+		case <-time.After(millis_retry):
+			udp_tx_c <- msg_out
 		}
-
 	}
 
-	// recieve_tries := 10
-	// send_tries := 10
-	// loaded := 0
-	// fmt.Println("AMANAGER: Sending request for backup")
-
-	// for j := 0; j < send_tries; j++ {
-	// 	if loaded == 1 {
-	// 		break
-	// 	}
-
-	// 	udp_tx_c <- msg_out
-	// 	for i := 0; i < recieve_tries; i++ {
-	// 		if loaded == 1 {
-	// 			break
-	// 		}
-	// 		select {
-	// 		case msg_in = <-udp_rx_c:
-	// 			if msg_in.Type == types.GIVE_BACKUP {
-	// 				assigned_tasks = slice2tasks(msg_in.Data)
-	// 				loaded = 1
-	// 			}
-	// 		case <-time.After(time.Second):
-	// 			if i == recieve_tries-1 {
-	// 				fmt.Println("AMANAGER: Resending request for backup")
-	// 			}
-	// 		}
-	// 	}
-	// }
-	if loaded != 0 {
-		fmt.Println("AMANAGER: Backup loaded")
-	} else {
-		fmt.Println("AMANAGER: No backup! TASKS ARE LOST")
-	}
-	l := len(assigned_tasks)
-	for i := 0; i < l; i++ {
+	for i := 0; i < len(assigned_tasks); i++ {
 		driver.SetButtonLamp(assigned_tasks[i].Type, assigned_tasks[i].Floor, 1)
 	}
 
