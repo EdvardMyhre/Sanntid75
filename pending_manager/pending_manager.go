@@ -15,7 +15,7 @@ import (
 
 // 	//PENDING TASK MANAGER CHANNELS:
 // 	//With button_intermediary
-// 	channel_button_intermediary_to_pending_tasks_manager := make(chan types.Button)
+// 	channel_button_intermediary_to_pending_tasks_manager := make(chan types.Task)
 // 	//With distributor
 // 	channel_distributor_to_pending_tasks_manager := make(chan types.Task)
 // 	channel_pending_tasks_manager_to_distributor := make(chan types.Task)
@@ -67,7 +67,7 @@ type struct_distributor_state struct {
 
 var distributor_state struct_distributor_state
 
-func Pending_task_manager(channel_from_button_intermediary <-chan types.Button,
+func Pending_task_manager(channel_from_button_intermediary <-chan types.Task,
 	channel_from_distributor <-chan types.Task, channel_to_distributor chan<- types.Task,
 	channel_from_assigned_tasks_manager <-chan types.Task, channel_to_assigned_tasks_manager chan<- types.Task,
 	channel_from_backup_manager <-chan types.MainData) {
