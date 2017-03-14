@@ -131,8 +131,8 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 				message_sendCh <- message
 				//fmt.Println("find_backup: ", message)
 				//time.Sleep(50 * time.Millisecond)
-				fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-				return
+				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+				//return
 			}
 		}
 	}
