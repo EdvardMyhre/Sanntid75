@@ -35,15 +35,12 @@ const (
 
 const (
 	TIMEOUT_MESSAGE_RESPONSE = 2.5
-	//The wait times reagarding backup over udp. Multiplying by 10**6 and then the number of millis desired
-	TIMEOUT_BACKUP_RESPONSE = int64(1000000 * 500)
-	RETRY_BACKUP_RESPONSE   = 1000000 * 10 * time.Nanosecond
-	TIMEOUT_AMANAGER        = 1000000 * 500 * time.Nanosecond
-	PAUSE_AMAGER            = 1000000 * 10 * time.Nanosecond
-)
-
-const (
 	//First number is gives wait time in MILLISECONDS
+	TIMEOUT_BACKUP_RESPONSE = int64(500 * 1000000)
+	RETRY_BACKUP_RESPONSE   = 10 * 1000000 * time.Nanosecond
+	TIMEOUT_AMANAGER        = 500 * 1000000 * time.Nanosecond
+	PAUSE_AMAGER            = 10 * 1000000 * time.Nanosecond
+
 	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 2000 * 1000000 * time.Nanosecond
 	TIMEOUT_MESSAGE_SEND_WAITTIME    = 50 * 1000000 * time.Nanosecond
 	TIMEOUT_MODULE_DISTRIBUTOR       = 2000 * 1000000 * time.Nanosecond
@@ -84,8 +81,8 @@ const (
 	//Message types used by network module
 
 	//From Network Module
-	BACKUP_LOST                         = (ID_MODULE_BACKUP_MANAGER | 24) //xxx 11000
-	ID_MSG_TYPE_IS_MY_BACKUP_ALIVE      = (ID_MODULE_NETWORK | 24)        //xxx 11000
-	ID_MSG_TYPE_IS_MY_BACKUP_ALIVE_TRUE = (ID_MODULE_NETWORK | 20)        //xxx 10100
-	ID_MSG_TYPE_YOU_ARE_MY_BACKUP       = (ID_MODULE_NETWORK | 18)        //xxx 10010
+	BACKUP_LOST             = (ID_MODULE_BACKUP_MANAGER | 24) //xxx 11000
+	IS_MY_BACKUP_ALIVE      = (ID_MODULE_NETWORK | 24)        //xxx 11000
+	IS_MY_BACKUP_ALIVE_TRUE = (ID_MODULE_NETWORK | 20)        //xxx 10100
+	YOU_ARE_MY_BACKUP       = (ID_MODULE_NETWORK | 18)        //xxx 10010
 )
