@@ -45,19 +45,24 @@ func main() {
 		udp_rx_c, udp_tx_c)
 	go elevator.ButtonPoller(pmanager_task_c)
 
+	tries := 0
 	for {
 		select {
 		case pmanager_status := <-pmanager_status_c:
 			fmt.Println("AMANAGER: New status to pmanager:", pmanager_status)
 		case udp_in = <-udp_tx_c:
 			if udp_in.Destination == "backup" && udp_in.Type == types.REQUEST_BACKUP {
-				udp_out.Type = types.GIVE_BACKUP
-				udp_out.Data = a
-				select {
-				case udp_rx_c <- udp_out:
-				case <-time.After(time.Second * 10):
-					fmt.Println("MAIN: Could not send backup")
+				if tries > 3 {
+					udp_out.Type = types.GIVE_BACKUP
+					udp_out.Data = a
+					select {
+					case udp_rx_c <- udp_out:
+					case <-time.After(time.Second * 10):
+						fmt.Println("MAIN: Could not send backup")
+					}
 				}
+				tries++
+
 			} else if udp_in.Destination == "backup" && udp_in.Type == types.PUSH_BACKUP {
 				fmt.Println("AMANAGER: pushed backup:")
 				fmt.Println(udp_in.Data)
