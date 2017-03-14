@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 const (
 	ElevatorType = 0 //1 is simulation, 0 is comedi
 )
@@ -32,7 +34,11 @@ const (
 )
 
 const (
-	TIMEOUT_MESSAGE_RESPONSE = 2.5
+	//First number is gives wait time in MILLISECONDS
+	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 2000*1000000*time.Nanosecond
+	TIMEOUT_MESSAGE_SEND_WAITTIME = 50*1000000*time.Nanosecond
+	TIMEOUT_MODULE_DISTRIBUTOR = 2000*1000000*time.Nanosecond
+	TIMEOUT_PENDINGLIST_ORDER = 5000*1000000*time.Nanosecond
 )
 
 const (
@@ -54,11 +60,11 @@ const (
 	//Message types used by distributor
 	REQUEST_WEIGHT                       = (ID_MODULE_AMANAGER | 24) //xxx 11000
 	DISTRIBUTE_ORDER                     = (ID_MODULE_AMANAGER | 20) //xxx 10100
-	MESSAGE_TYPE_GIVE_DISTRIBUTOR_STATUS = (ID_MODULE_TASK_MANAGER | 24)
+	//MESSAGE_TYPE_GIVE_DISTRIBUTOR_STATUS = (ID_MODULE_TASK_MANAGER | 24)
 
 	//Message types used by task manager
-	MESSAGE_TYPE_DISTRIBUTE_NEWORDER        = (ID_MODULE_DISTRIBUTOR | 24) //xxx 11000
-	MESSAGE_TYPE_REQUEST_DISTRIBUTOR_STATUS = (ID_MODULE_DISTRIBUTOR | 20) //xxx 10100
+	//MESSAGE_TYPE_DISTRIBUTE_NEWORDER        = (ID_MODULE_DISTRIBUTOR | 24) //xxx 11000
+	//MESSAGE_TYPE_REQUEST_DISTRIBUTOR_STATUS = (ID_MODULE_DISTRIBUTOR | 20) //xxx 10100
 	GIVE_BACKUP                             = (ID_MODULE_AMANAGER | 30)    //xxx 11110
 
 	//Message types used by elevator controller
