@@ -79,12 +79,12 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 					}
 				}
 
-				my_backup_is_gone(&myBackupAlive, backupFor, p, &myBackupId)
-				/*fmt.Println("Min id er:              ", id)
+				is_my_backup_gone(&myBackupAlive, p, &myBackupId)
+				fmt.Println("Min id er:              ", id)
 				fmt.Println("Min backupid er:        ", myBackupId)
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
 				fmt.Println("backupFor:              ", backupFor)
-				fmt.Println("")*/
+				fmt.Println("")
 
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
@@ -207,16 +207,19 @@ func my_backup_is_alive(id string, myBackupAlive *bool, m structer.MainData) {
 
 }
 
-func my_backup_is_gone(myBackupAlive *bool, backupFor []string, p peers.PeerUpdate, myBackupId *string) {
-	for i := range backupFor {
-		for j := range p.Lost {
-			if backupFor[i] == p.Lost[j] {
-				*myBackupAlive = false
-				*myBackupId = ""
+func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *string) {
+	for j := range p.Lost {
+		if *myBackupId == p.Lost[j] {
+			*myBackupAlive = false
+			*myBackupId = ""
 
-			}
 		}
 	}
+}
+
+
+func who_i_am_backup_for_is_gone() {
+	
 }
 
 // Hvis den vi er backup for dør, send melding til pending_task_mangager
