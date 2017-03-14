@@ -105,7 +105,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 
 					case messageid.ID_MODULE_NETWORK:
 						fmt.Println("NÅ kom meldingen:     ", a)
-						message_receive_backup_alive(id, a, backupFor, message_sendCh)
+						message_receive_is_my_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
 						//fmt.Println("backupFor:              ", backupFor)
@@ -184,7 +184,7 @@ func send_message_is_my_backup_alive(id string, message_sendCh chan structer.Mai
 }
 
 //--------------------------- Min Backup lever ------------------------------
-func message_receive_backup_alive(id string, m structer.MainData, backupFor []string, message_sendCh chan structer.MainData) {
+func message_receive_is_my_backup_alive(id string, m structer.MainData, backupFor []string, message_sendCh chan structer.MainData) {
 	if (m.Destination == "broadcast") && ((m.Message_type & 31) == messageid.ID_MSG_TYPE_IS_MY_BACKUP_ALIVE) {
 		for i := range backupFor {
 			if backupFor[i] == m.Source {
