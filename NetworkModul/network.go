@@ -72,6 +72,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 					for i := 0; i < 5; i++ {
 						send_message_is_my_backup_alive(id, message_sendCh)
 					}
+					fmt.Println("Har jeg fått melding først?")
 					if myBackupAlive == false {
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 					}
@@ -102,6 +103,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 						n_to_a_tasks_manager <- a
 
 					case messageid.ID_MODULE_NETWORK:
+						fmt.Println("NÅ kom meldingen:     ", a)
 						message_receive_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
