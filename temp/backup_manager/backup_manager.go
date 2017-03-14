@@ -29,7 +29,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 	var backup_matrix []struct_backup_element
 	var sendQueue_push []string
 	var sendQueue_request []string
-	var sendQueue_pending_manager []string
+	var sendQueue_lostbackup []string
 
 	for {
 //BEHAVIOR FOR RECEIVING FROM NETWORK
@@ -91,15 +91,15 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 					//Check if task is already in queue
 					var command_already_exists bool
 					command_already_exists = false
-					for i := 0 ; i< len(sendQueue_pending_manager) ; i++ {
-						if sendQueue_pending_manager[i] == network_message.Source {
+					for i := 0 ; i< len(sendQueue_lostbackup) ; i++ {
+						if sendQueue_lostbackup[i] == network_message.Source {
 							command_already_exists = true
-							fmt.Println("Received an already exsting backup lost message. Duplicate NOT added to queue. Current queue: ",sendQueue_pending_manager)
+							fmt.Println("Received an already exsting backup lost message. Duplicate NOT added to queue. Current queue: ",sendQueue_lostbackup)
 						}
 					}
 					if command_already_exists == false {
-						sendQueue_pending_manager = append(sendQueue_pending_manager, network_message.Source)
-						fmt.Println("Received new backup lost message. Current queue: ",sendQueue_pending_manager)
+						sendQueue_lostbackup = append(sendQueue_lostbackup, network_message.Source)
+						fmt.Println("Received new backup lost message. Current queue: ",sendQueue_lostbackup)
 					}
 				}
 			
@@ -130,7 +130,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 				case channel_to_network <- push_message:
 					fmt.Println("Sent push response back to: ",sendQueue_push[0])
 					//Delete element in index 0
-					sendQueue_push = append(sendQueue_push[:0])
+					sendQueue_push = append(sendQueue_push[1:])
 				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}
 			
@@ -156,7 +156,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 			select{
 				case channel_to_network <- request_message:
 				fmt.Println("Sent request response back to: ",sendQueue_request[0])
-				sendQueue_request = append(sendQueue_request[:0])
+				sendQueue_request = append(sendQueue_request[1:])
 				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}
 			
@@ -164,8 +164,29 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 		}
 		
 //BEHAVIOR FOR SENDING "BACKUP LOST" TO PENDING MANAGER
-		if len(sendQueue_pending_manager) > 0 {
+		if len(sendQueue_lostbackup) > 0 {
+			var lost_backup_index int
+			var lost_backup_exists bool
+			lost_backup_exists = false
 			
+			for i := 0 ; i<len(backup_matrix) ; i++ {
+				if backup_matrix[i].BackupIP == sendQueue_lostbackup[0] {
+					lost_backup_index = i
+					lost_backup_exists = true
+					break
+				}
+			}
+			
+			if lost_backup_exists {
+				var lostbackup_message types.MainData
+				lostbackup_message.Data = backup_matrix[lost_backup_index].BackupData
+				select {
+					case channel_to_pending_manager <- lostbackup_message:
+						fmt.Println("Sent lost backup matrix to pending. Lost backup IP: ", sendQueue_lostbackup[0])
+						sendQueue_lostbackup = append(sendQueue_lostbackup[1:])
+					case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+				}
+			}
 		}
 	}
 																				
