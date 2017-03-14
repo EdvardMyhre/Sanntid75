@@ -40,6 +40,7 @@ const (
 	TIMEOUT_AMANAGER_WAITTIME = 500 * 1000000 * time.Nanosecond
 	PAUSE_AMAGER              = 5 * 1000000 * time.Nanosecond
 	PAUSE_ELEVATOR            = 5 * 1000000 * time.Nanosecond
+	PAUSE_NET_LISTNER		  = 2 * 1000000 * time.Nanosecond
 
 	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 2000 * 1000000 * time.Nanosecond
 	TIMEOUT_MESSAGE_SEND_WAITTIME    = 50 * 1000000 * time.Nanosecond
