@@ -72,14 +72,11 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 					for i := 0; i < 5; i++ {
 						send_message_is_my_backup_alive(id, message_sendCh)
 					}
-					fmt.Println("sjekker melding: 1")
 					if myBackupAlive == false {
-						//fmt.Println("leter etter backup da.....................")
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
-
 					}
 				}
-
+				is_who_i_am_backup_for_gone(backupFor, p, n_to_p_task_manager)
 				is_my_backup_gone(&myBackupAlive, p, &myBackupId)
 				fmt.Println("Min id er:              ", id)
 				fmt.Println("Min backupid er:        ", myBackupId)
@@ -105,7 +102,6 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 						n_to_a_tasks_manager <- a
 
 					case messageid.ID_MODULE_NETWORK:
-						fmt.Println("motat melding:  2 ", a)
 						message_receive_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
@@ -213,6 +209,7 @@ func my_backup_is_alive(id string, myBackupAlive *bool, m structer.MainData) {
 
 }
 
+
 func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *string) {
 	for j := range p.Lost {
 		if *myBackupId == p.Lost[j] {
@@ -224,8 +221,21 @@ func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *stri
 }
 
 
-func who_i_am_backup_for_is_gone() {
-	
+func is_who_i_am_backup_for_gone(backupFor []string, p peers.PeerUpdate, n_to_p_task_manager chan structer.MainData) {
+	for i := range backupFor {
+		for j := range p.Lost {
+			if backupFor[i] == p.Lost[j] {
+				message := structer.MainData{}
+				message.Source = p.Lost[j]
+				message.Destination = ""
+				message.Message_type = messageid.BACKUP_LOST
+				row1 := []int{}
+				row2 := []int{}
+				message.Data = append(message.Data, row1)
+				message.Data = append(message.Data, row2)
+				n_to_p_task_manager <- message
+			}
+		}
+	}
 }
 
-// Hvis den vi er backup for dør, send melding til pending_task_mangager
