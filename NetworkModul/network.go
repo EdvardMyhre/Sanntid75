@@ -80,7 +80,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 					}
 				}
 				my_backup_is_gone(&myBackupAlive, backupFor, p, &myBackupId)
-				//time.Sleep(1000 * time.Millisecond)
+				time.Sleep(1000 * time.Millisecond)
 				fmt.Println("Min id er:              ", id)
 				fmt.Println("Min backupid er:        ", myBackupId)
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
