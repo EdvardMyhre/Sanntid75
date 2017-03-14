@@ -5,6 +5,7 @@ import (
 	"time"
 	"./Tester"
 	"../types"
+	"./backup_manager"
 )
 
 func main(){
@@ -35,7 +36,7 @@ func main(){
 								channel_assigned_tasks_manager_to_pending_tasks_manager,		channel_pending_tasks_manager_to_assigned_tasks_manager,
 								channel_backup_manager_to_pending_manager)
 	
-	go Backup_manager(			channel_network_module_to_backup_manager,	channel_backup_manager_to_network_module,
+	go backup_manager.Backup_manager(			channel_network_module_to_backup_manager,	channel_backup_manager_to_network_module,
 																			channel_backup_manager_to_pending_manager)
 	
 	//Test functions, Can be removed when combining
@@ -234,7 +235,7 @@ func Pending_task_manager(	channel_from_button_intermediary 	<-chan types.Button
 
 
 
-
+/*
 type struct_backup_element struct {
 	BackupIP      string
 	BackupData    [][]int
@@ -376,7 +377,7 @@ func Backup_manager(	channel_from_network 	<-chan types.MainData,		channel_to_ne
 }
 
 
-
+*/
 //FLOOR, ASSIGNED, BUTTON TYPE, TIMESTAMP
 func adjust_pendinglist(adjust_type int, adjust_floor int,adjust_assigned int, adjust_timestamp bool){
 	if adjust_floor >= len(pendingList) || adjust_floor < 0{
