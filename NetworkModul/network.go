@@ -71,6 +71,7 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 				if myBackupId == "" {
 					for i := 0; i < 5; i++ {
 						send_message_is_my_backup_alive(id, message_sendCh)
+						return
 					}
 					if myBackupAlive == false {
 						//fmt.Println("leter etter backup da.....................")
