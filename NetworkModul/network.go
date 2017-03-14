@@ -64,7 +64,6 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 	}()
 
 	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
-	fmt.Println("Started")
 	go func() {
 		for {
 			select {
