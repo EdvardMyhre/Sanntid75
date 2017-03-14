@@ -59,6 +59,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				message_send.Destination = myBackupId
 			}
 			message_sendCh <- message_send
+			time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}()
 
@@ -85,6 +86,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				fmt.Println("backupFor:              ", backupFor)
 				fmt.Println("")
 			}
+			time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}()
 	go func() {
@@ -111,6 +113,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 					}
 				}
 			}
+			time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}()
 }
@@ -138,6 +141,7 @@ func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sen
 				//time.Sleep(50 * time.Millisecond)
 				return
 			}
+			time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}
 }
