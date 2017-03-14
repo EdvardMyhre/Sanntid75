@@ -34,12 +34,12 @@ const (
 )
 
 const (
-	TIMEOUT_MESSAGE_RESPONSE = 2.5
 	//First number is gives wait time in MILLISECONDS
-	TIMEOUT_BACKUP_RESPONSE = int64(500 * 1000000)
-	RETRY_BACKUP_RESPONSE   = 10 * 1000000 * time.Nanosecond
-	TIMEOUT_AMANAGER        = 500 * 1000000 * time.Nanosecond
-	PAUSE_AMAGER            = 10 * 1000000 * time.Nanosecond
+	TIMEOUT_BACKUP_RESPONSE   = int64(500 * 1000000)
+	RETRY_BACKUP_RESPONSE     = 5 * 1000000 * time.Nanosecond
+	TIMEOUT_AMANAGER_WAITTIME = 500 * 1000000 * time.Nanosecond
+	PAUSE_AMAGER              = 5 * 1000000 * time.Nanosecond
+	PAUSE_ELEVATOR            = 5 * 1000000 * time.Nanosecond
 
 	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 2000 * 1000000 * time.Nanosecond
 	TIMEOUT_MESSAGE_SEND_WAITTIME    = 50 * 1000000 * time.Nanosecond
@@ -79,8 +79,6 @@ const (
 	TASK_ASSIGNED  = (ID_MODULE_AMANAGER | 17)       //xxx 10001
 
 	//Message types used by network module
-
-	//From Network Module
 	BACKUP_LOST             = (ID_MODULE_BACKUP_MANAGER | 24) //xxx 11000
 	IS_MY_BACKUP_ALIVE      = (ID_MODULE_NETWORK | 24)        //xxx 11000
 	IS_MY_BACKUP_ALIVE_TRUE = (ID_MODULE_NETWORK | 20)        //xxx 10100
