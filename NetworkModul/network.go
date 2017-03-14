@@ -71,22 +71,28 @@ func Network_start(n_to_distri chan structer.MainData, n_to_p_task_manager chan 
 			case p := <-peerUpdateCh:
 				if myBackupId == "" {
 					//for i := 0; i < 5; i++ {
-						send_message_is_my_backup_alive(id, message_sendCh)
+						//send_message_is_my_backup_alive(id, message_sendCh)
 					//}
-					time.Sleep(200 * time.Millisecond)
-					if myBackupAlive == false {
+					//time.Sleep(200 * time.Millisecond)
+					//if myBackupAlive == false {
 						//fmt.Println("leter etter backup da.....................")
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 
-					}
+					//}
 				}
+/*
 				my_backup_is_gone(&myBackupAlive, backupFor, p, &myBackupId)
 				time.Sleep(1000 * time.Millisecond)
 				fmt.Println("Min id er:              ", id)
 				fmt.Println("Min backupid er:        ", myBackupId)
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
 				//fmt.Println("backupFor:              ", backupFor)
-				fmt.Println("")
+				fmt.Println("")*/
+
+				fmt.Printf("Peer update:\n")
+				fmt.Printf("  Peers:    %q\n", p.Peers))
+				fmt.Printf("  New:      %q\n", p.New)
+				fmt.Printf("  Lost:     %q\n", p.Lost)
 
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
