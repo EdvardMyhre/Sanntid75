@@ -7,16 +7,46 @@ import "fmt"
 
 func Controller(taskc <-chan int, statusc chan<- types.Status) {
 	var timeOpen time.Duration
-	timeOpen = 2
+	timeOpen = 4
+
+	driver.SetMotorDirection(types.MOTOR_DIR_UP)
+	for driver.GetFloorSensorSignal() != 3 {
+	}
+	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	driver.SetDoorOpenLamp(types.LAMP_ON)
+	time.Sleep(time.Second * timeOpen)
+	driver.SetDoorOpenLamp(types.LAMP_OFF)
+
+	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
+	for driver.GetFloorSensorSignal() != 2 {
+	}
+	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	driver.SetDoorOpenLamp(types.LAMP_ON)
+	time.Sleep(time.Second * timeOpen)
+	driver.SetDoorOpenLamp(types.LAMP_OFF)
+
+	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
+	for driver.GetFloorSensorSignal() != 1 {
+	}
+	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	driver.SetDoorOpenLamp(types.LAMP_ON)
+	time.Sleep(time.Second * timeOpen)
+	driver.SetDoorOpenLamp(types.LAMP_OFF)
 
 	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 	for driver.GetFloorSensorSignal() != 0 {
 	}
 	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	driver.SetDoorOpenLamp(types.LAMP_ON)
+	time.Sleep(time.Second * timeOpen)
+	driver.SetDoorOpenLamp(types.LAMP_OFF)
 
 	status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 	floor_signal := 0
-	driver.SetFloorIndicator(0)
 	statusc <- status
 
 	for {
