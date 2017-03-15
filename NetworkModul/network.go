@@ -74,7 +74,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 					for i := 0; i < 5; i++ {
 						send_message_is_my_backup_alive(id, message_sendCh)
 					}
-					time.Sleep(50 * time.Millisecond)
+					//time.Sleep(50 * time.Millisecond)
 					//fmt.Println("Har jeg fått melding først?")
 					if myBackupAlive == false {
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
