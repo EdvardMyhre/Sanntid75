@@ -73,6 +73,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						n_to_a_tasks_manager <- a
 
 					case types.ID_BACKUP_RESPONSE:
+						fmt.Println("NETWORK: backup response recieved as:", a)
 						n_to_a_tasks_manager2 <- a
 
 					case types.ID_MODULE_NETWORK:
