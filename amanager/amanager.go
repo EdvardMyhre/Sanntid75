@@ -24,6 +24,11 @@ func Assigned_tasks_manager(elev_status_c <-chan types.Status, elev_task_c chan<
 	var alike int
 	var index int
 
+	button_lights := make([][]time.Time, types.NUMBER_OF_FLOORS)
+	for i := 0; i < types.NUMBER_OF_FLOORS; i++ {
+		button_lights[i] = make([]time.Time, 2)
+	}
+
 	elev_status := types.Status{Destination_floor: 0, Floor: 0, Prev_floor: 1, Finished: 1, Between_floors: 0}
 	weight := 255
 
@@ -59,6 +64,9 @@ Boot_loop:
 
 	for i := 0; i < len(assigned_tasks); i++ {
 		driver.SetButtonLamp(assigned_tasks[i].Type, assigned_tasks[i].Floor, 1)
+		if assigned_tasks[i].Type != types.BTN_TYPE_COMMAND {
+			button_lights[assigned_tasks[i].Floor][assigned_tasks[i].Type] = time.Now()
+		}
 	}
 
 	//Reading channels for input
@@ -129,6 +137,9 @@ Boot_loop:
 				//Update local lights
 				for i := 0; i < len(tasks_temp); i++ {
 					driver.SetButtonLamp(tasks_temp[i].Type, tasks_temp[i].Floor, 0)
+					if tasks_temp[i].Type != types.BTN_TYPE_COMMAND {
+						button_lights[tasks_temp[i].Floor][tasks_temp[i].Type] = time.Since(time.Now())
+					}
 				}
 
 				//Delete cab commands before updating non-local lights
@@ -231,6 +242,9 @@ Boot_loop:
 				}
 			}
 			driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
+			if task_new.Type != types.BTN_TYPE_COMMAND {
+				button_lights[task_new.Floor][task_new.Type] = time.Now()
+			}
 
 			//Reply to pmanager
 			select {
@@ -358,6 +372,9 @@ Boot_loop:
 
 					//Set local lights
 					driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
+					if task_new.Type != types.BTN_TYPE_COMMAND {
+						button_lights[task_new.Floor][task_new.Type] = time.Now()
+					}
 
 				} else {
 					fmt.Println("AMANAGER: could not deserialize task from udp!")
@@ -376,8 +393,10 @@ Boot_loop:
 						if task_new.Type != types.BTN_TYPE_COMMAND {
 							if task_new.Finished != 0 {
 								driver.SetButtonLamp(task_new.Type, task_new.Floor, 0)
+								button_lights[task_new.Floor][task_new.Type] = time.Since(time.Now())
 							} else {
 								driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
+								button_lights[task_new.Floor][task_new.Type] = time.Now()
 							}
 
 						}
@@ -407,8 +426,10 @@ Boot_loop:
 					if task_new.Type != types.BTN_TYPE_COMMAND {
 						if task_new.Finished != 0 {
 							driver.SetButtonLamp(task_new.Type, task_new.Floor, 0)
+							button_lights[task_new.Floor][task_new.Type] = time.Since(time.Now())
 						} else {
 							driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
+							button_lights[task_new.Floor][task_new.Type] = time.Now()
 						}
 
 					}
@@ -422,6 +443,22 @@ Boot_loop:
 			}
 
 		case <-time.After(types.PAUSE_AMAGER):
+		}
+
+		for i := 0; i < types.NUMBER_OF_FLOORS; i++ {
+			for k := 0; k < 2; k++ {
+				if time.Since(button_lights[i][k]) > types.TIMEOUT_LIGHT_ON {
+					task_new.Type = k
+					task_new.Floor = i
+					task_new.Finished = 0
+					task_new.Assigned = 255
+					copy_assigned = nil
+					for p := 0; p < len(assigned_tasks); p++ {
+						copy_assigned = append(copy_assigned, assigned_tasks[p])
+					}
+					_, assigned_tasks = addTask(copy_assigned, task_new, elev_status)
+				}
+			}
 		}
 
 	} //end of inf loop
