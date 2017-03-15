@@ -87,6 +87,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
 				fmt.Println("backupFor:              ", backupFor)
 				//fmt.Println("")
+			case <-time.After(time.Millisecond):
 			}
 			//time.Sleep(types.PAUSE_NET_LISTNER)
 		}
@@ -117,8 +118,8 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						//fmt.Println("backupFor:              ", backupFor)
 					}
 				}
+			case <-time.After(time.Millisecond):
 			}
-			time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}()
 }
