@@ -65,47 +65,6 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 		}
 	}()
 
-	if myBackupId == "" {
-		for i := 0; i < 5; i++ {
-			send_message_is_my_backup_alive(id, message_sendCh)
-		}
-		time.Sleep(50 * time.Millisecond)
-		//fmt.Println("Har jeg fått melding først?")
-		/*if myBackupAlive == false {
-			find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
-		}*/
-	}
-
-	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
-	go func() {
-		for {
-			select {
-			case p := <-peerUpdateCh:
-				/*if myBackupId == "" {
-					for i := 0; i < 5; i++ {
-						send_message_is_my_backup_alive(id, message_sendCh)
-					}
-					time.Sleep(50 * time.Millisecond)
-					//fmt.Println("Har jeg fått melding først?")
-					if myBackupAlive == false {
-						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
-					}
-				}*/
-				if myBackupAlive == false {
-					find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
-				}
-				is_who_i_am_backup_for_gone(backupFor, p, n_to_p_task_manager)
-				is_my_backup_gone(&myBackupAlive, p, &myBackupId)
-				fmt.Println("Min id er:              ", id)
-				fmt.Println("Min backupid er:        ", myBackupId)
-				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
-				fmt.Println("backupFor:              ", backupFor)
-				//fmt.Println("")
-			case <-time.After(time.Millisecond):
-			}
-			//time.Sleep(types.PAUSE_NET_LISTNER)
-		}
-	}()
 	go func() {
 		for {
 			select {
@@ -134,6 +93,47 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				}
 			case <-time.After(time.Millisecond):
 			}
+		}
+	}()
+
+	if myBackupId == "" {
+		for i := 0; i < 5; i++ {
+			send_message_is_my_backup_alive(id, message_sendCh)
+		}
+		fmt.Println("Har jeg fått melding først?")
+		/*if myBackupAlive == false {
+			find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
+		}*/
+	}
+	time.Sleep(50 * time.Millisecond)
+	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
+	go func() {
+		for {
+			select {
+			case p := <-peerUpdateCh:
+				/*if myBackupId == "" {
+					for i := 0; i < 5; i++ {
+						send_message_is_my_backup_alive(id, message_sendCh)
+					}
+					time.Sleep(50 * time.Millisecond)
+					//fmt.Println("Har jeg fått melding først?")
+					if myBackupAlive == false {
+						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
+					}
+				}*/
+				if myBackupAlive == false {
+					find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
+				}
+				is_who_i_am_backup_for_gone(backupFor, p, n_to_p_task_manager)
+				is_my_backup_gone(&myBackupAlive, p, &myBackupId)
+				fmt.Println("Min id er:              ", id)
+				fmt.Println("Min backupid er:        ", myBackupId)
+				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
+				fmt.Println("backupFor:              ", backupFor)
+				//fmt.Println("")
+			case <-time.After(time.Millisecond):
+			}
+			//time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}()
 }
