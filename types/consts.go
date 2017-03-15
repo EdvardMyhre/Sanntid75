@@ -42,7 +42,7 @@ const (
 	PAUSE_ELEVATOR                 = 1 * 1000000 * time.Nanosecond
 	PAUSE_NET_LISTNER              = 2 * 1000000 * time.Nanosecond
 	TIMEOUT_BUTTON_POLLER_WAITTIME = 200 * 1000000 * time.Nanosecond
-	TIMEOUT_LIGHT_ON               = 20000 * 1000000 * time.Nanosecond
+	TIMEOUT_LIGHT_ON               = 30000 * 1000000 * time.Nanosecond
 
 	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 1000 * 1000000 * time.Nanosecond
 	TIMEOUT_MESSAGE_SEND_WAITTIME    = 50 * 1000000 * time.Nanosecond

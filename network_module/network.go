@@ -27,11 +27,11 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 	message_sendCh := make(chan types.MainData)
 	message_receivedCh := make(chan types.MainData)
 
-	go peers.Transmitter(50018, id, peerTxEnable)
-	go peers.Receiver(50018, peerUpdateCh)
+	go peers.Transmitter(51017, id, peerTxEnable)
+	go peers.Receiver(51017, peerUpdateCh)
 
-	go bcast.Transmitter(40018, message_sendCh)
-	go bcast.Receiver(40018, message_receivedCh)
+	go bcast.Transmitter(40117, message_sendCh)
+	go bcast.Receiver(40117, message_receivedCh)
 
 	//-----------------------  Receiver from modules --------------------
 	go func() {
