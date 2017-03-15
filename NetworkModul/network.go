@@ -57,7 +57,8 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 			message_send.Source = id
 
 			if message_send.Destination == "backup" {
-				message_send.Destination = myBackupId
+				//message_send.Destination = myBackupId
+				message_send.Destination = "broadcast"
 			}
 			message_sendCh <- message_send
 			time.Sleep(types.PAUSE_NET_LISTNER)
@@ -74,7 +75,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						send_message_is_my_backup_alive(id, message_sendCh)
 					}
 					time.Sleep(50 * time.Millisecond)
-					fmt.Println("Har jeg fått melding først?")
+					//fmt.Println("Har jeg fått melding først?")
 					if myBackupAlive == false {
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 					}
@@ -85,7 +86,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				fmt.Println("Min backupid er:        ", myBackupId)
 				fmt.Println("Min myBackupAlive er:   ", myBackupAlive)
 				fmt.Println("backupFor:              ", backupFor)
-				fmt.Println("")
+				//fmt.Println("")
 			}
 			time.Sleep(types.PAUSE_NET_LISTNER)
 		}
@@ -109,7 +110,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						n_to_a_tasks_manager2 <- a
 
 					case types.ID_MODULE_NETWORK:
-						fmt.Println("NÅ kom meldingen:     ", a)
+						//fmt.Println("NÅ kom meldingen:     ", a)
 						message_receive_is_my_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
@@ -125,10 +126,10 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 //--------------------- Finner din backup  -----------------------------
 func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan types.MainData, myBackupId *string) {
 
-	if len(p.Peers) > 1 {
+	if len(p.Peers) >= 1 { //xxxxxxxxxxxxxxxxxxxxxxxxxxx endre >= til > xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 		for {
 			i := rand.Intn(len(p.Peers))
-			if p.Peers[i] != id {
+			if p.Peers[i] == id { //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx endre == id til != id xxxxxxxxxxxxxxxxxxxxxxxxxx
 				*myBackupAlive = true
 				*myBackupId = p.Peers[i]
 
