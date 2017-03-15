@@ -109,7 +109,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 			select {
 			case channel_to_network <- push_message:
-
+				fmt.Println("BACKUP MANAGER: Sending ACK_BACKUP")
 				sendQueue_push = append(sendQueue_push[1:])
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}
@@ -136,7 +136,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 			select {
 			case channel_to_network <- request_message:
-
+				fmt.Println("BACKUP MANAGER: Sending GIVE_BACKUP")
 				sendQueue_request = append(sendQueue_request[1:])
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}
