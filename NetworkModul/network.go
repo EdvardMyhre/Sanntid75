@@ -221,7 +221,7 @@ func message_receive_is_my_backup_alive(id string, m types.MainData, backupFor [
 				message.Data = append(message.Data, row1)
 				message.Data = append(message.Data, row2)
 				message_sendCh <- message
-				//fmt.Println("message_receive_backup_alive:    ", message)
+				fmt.Println("message_receive_backup_alive:    ", message)
 
 			}
 		}
