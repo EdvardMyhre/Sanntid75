@@ -173,7 +173,7 @@ func find_localip() string {
 			fmt.Println(err)
 			localIP = "DISCONNECTED"
 		}
-		id = fmt.Sprintf("%s-%d", localIP)
+		id = fmt.Sprintf("%s", localIP)
 	}
 	return id
 }
