@@ -60,7 +60,7 @@ const (
 	ID_MODULE_DISTRIBUTOR    = 96  //011 xxxxx
 	ID_MODULE_BACKUP_MANAGER = 160 //101 xxxxx
 	ID_MODULE_AMANAGER       = 192 //110 xxxxx
-	ID_BACKUP_RESPONSE       = 255 //111 xxxxx
+	ID_BACKUP_RESPONSE       = 224 //111 xxxxx
 
 )
 
