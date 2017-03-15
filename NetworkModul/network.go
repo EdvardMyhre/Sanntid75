@@ -88,7 +88,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				fmt.Println("backupFor:              ", backupFor)
 				//fmt.Println("")
 			}
-			time.Sleep(types.PAUSE_NET_LISTNER)
+			//time.Sleep(types.PAUSE_NET_LISTNER)
 		}
 	}()
 	go func() {
