@@ -101,12 +101,11 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 			send_message_is_my_backup_alive(id, message_sendCh)
 			fmt.Println("inne i for loop send_message_alive")
 		}
-		fmt.Println("Har jeg fått melding først?")
 		/*if myBackupAlive == false {
 			find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 		}*/
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	//-----------------------  Fordeler det som kommer fra broadcast og håndterer hvem som er i livet --------------------
 	go func() {
 		for {
@@ -122,6 +121,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 					}
 				}*/
+				fmt.Println("Har jeg fått melding først?")
 				if myBackupAlive == false {
 					find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 				}
