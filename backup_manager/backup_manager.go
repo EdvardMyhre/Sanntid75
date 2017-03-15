@@ -24,9 +24,9 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 		//BEHAVIOR FOR RECEIVING FROM NETWORK
 		select {
 		case network_message := <-channel_from_network:
-			//fmt.Println("Received something from network: ",network_message)
 			//"REQUEST BACKUP" RECEIVED
-			if network_message.Type == types.GIVE_BACKUP {
+			if network_message.Type == types.REQUEST_BACKUP {
+				fmt.Println("REQUEST BACKUP RECEIVED: ", network_message)
 				var request_command_already_exists bool
 				request_command_already_exists = false
 				for i := 0; i < len(sendQueue_request); i++ {
@@ -41,7 +41,8 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 				}
 
 				//"PUSH BACKUP" RECEIVED
-			} else if network_message.Type == types.ACK_BACKUP {
+			} else if network_message.Type == types.PUSH_BACKUP {
+				fmt.Println("PUSH BACKUP RECEIVED: ", network_message)
 				var backup_already_exists bool
 				var push_command_already_exists bool
 				backup_already_exists = false
@@ -111,6 +112,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 
 			var push_message types.MainData
 			push_message.Destination = sendQueue_push[0]
+			push_message.Type = types.ACK_BACKUP
 			if push_backup_exists {
 				push_message.Data = backup_matrix[push_index].BackupData
 			}
@@ -138,6 +140,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 
 			var request_message types.MainData
 			request_message.Destination = sendQueue_request[0]
+			request_message.Type = types.GIVE_BACKUP
 			if request_backup_exists {
 				request_message.Data = backup_matrix[request_index].BackupData
 			}
