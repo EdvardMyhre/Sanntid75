@@ -231,7 +231,7 @@ func message_receive_is_my_backup_alive(id string, m types.MainData, backupFor [
 func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData) {
 	if (m.Destination == id) && ((m.Type & 31) == types.IS_MY_BACKUP_ALIVE_TRUE) {
 		*myBackupAlive = true
-		//fmt.Println("my_backup_is_alive:    ", *myBackupAlive)
+		fmt.Println("my_backup_is_alive xxxxxxxxxxxxxxxxxxxxxx:    ", *myBackupAlive)
 	}
 
 }

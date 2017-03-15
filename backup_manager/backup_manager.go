@@ -26,7 +26,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 		case network_message := <-channel_from_network:
 			//"REQUEST BACKUP" RECEIVED
 			if network_message.Type == types.REQUEST_BACKUP {
-				fmt.Println("REQUEST BACKUP RECEIVED: ", network_message)
+				//fmt.Println("REQUEST BACKUP RECEIVED: ", network_message)
 				var request_command_already_exists bool
 				request_command_already_exists = false
 				for i := 0; i < len(sendQueue_request); i++ {
@@ -37,12 +37,12 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 				}
 				if request_command_already_exists == false {
 					sendQueue_request = append(sendQueue_request, network_message.Source)
-					fmt.Println("Received NEW REQUEST command message. Added to queue. Current request queue: ", sendQueue_request)
+					//fmt.Println("Received NEW REQUEST command message. Added to queue. Current request queue: ", sendQueue_request)
 				}
 
 				//"PUSH BACKUP" RECEIVED
 			} else if network_message.Type == types.PUSH_BACKUP {
-				fmt.Println("PUSH BACKUP RECEIVED: ", network_message)
+				//fmt.Println("PUSH BACKUP RECEIVED: ", network_message)
 				var backup_already_exists bool
 				var push_command_already_exists bool
 				backup_already_exists = false
@@ -72,7 +72,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 				//if not, create new command and append to list
 				if push_command_already_exists == false {
 					sendQueue_push = append(sendQueue_push, network_message.Source)
-					fmt.Println("Received NEW push command message. Added to queue. Current queue: ", sendQueue_push)
+					//fmt.Println("Received NEW push command message. Added to queue. Current queue: ", sendQueue_push)
 				}
 
 				//"BACKUP LOST" RECEIVED
@@ -118,7 +118,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 			select {
 			case channel_to_network <- push_message:
-				fmt.Println("Sent push response back to: ", sendQueue_push[0])
+				//fmt.Println("Sent push response back to: ", sendQueue_push[0])
 				//Delete element in index 0
 				sendQueue_push = append(sendQueue_push[1:])
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
@@ -146,7 +146,7 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 			select {
 			case channel_to_network <- request_message:
-				fmt.Println("Sent request response back to: ", sendQueue_request[0])
+				//fmt.Println("Sent request response back to: ", sendQueue_request[0])
 				sendQueue_request = append(sendQueue_request[1:])
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}

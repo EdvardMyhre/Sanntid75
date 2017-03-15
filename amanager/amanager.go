@@ -75,7 +75,6 @@ Boot_loop:
 				task_current.Finished = 255
 				tasks_temp = nil
 				index = 0
-				fmt.Println("Assigned tasks at new input from controller:", assigned_tasks)
 				if len(assigned_tasks) > 0 {
 					for {
 						if elev_status.Floor == assigned_tasks[index].Floor {
@@ -119,6 +118,7 @@ Boot_loop:
 							}
 						}
 						if msg_in.Type == types.ACK_BACKUP && alike != 0 {
+							fmt.Println("AMANAGER: Backup sucsessfully pushed and ack-ed")
 							break Push_backup_1
 						}
 					case <-time.After(types.RETRY_BACKUP_RESPONSE):
@@ -147,7 +147,6 @@ Boot_loop:
 						index++
 					}
 				}
-				fmt.Println("Task sent out that need light:", tasks_temp)
 
 				msg_out = types.MainData{Destination: "broadcast", Type: types.SET_LIGHT, Data: tasks2slice(tasks_temp)}
 				select {
@@ -175,7 +174,6 @@ Boot_loop:
 		//Input from pmanager, i.e new task from pmanager, command from cab or timed-out tasks
 		select {
 		case task_new = <-pmanager_task_c:
-			fmt.Println("INPUT FROM PMANAGER")
 			if task_new.Assigned != 0 {
 				fmt.Println("AMANAGER: been assigned an already assigned task!")
 			}
@@ -216,7 +214,7 @@ Boot_loop:
 						}
 					}
 					if msg_in.Type == types.ACK_BACKUP && alike != 0 {
-						fmt.Println("AMANGER: backup acknowledged")
+						fmt.Println("AMANAGER: Backup sucsessfully pushed and ack-ed")
 						break Push_backup_2
 					}
 				case <-time.After(types.RETRY_BACKUP_RESPONSE):
@@ -245,12 +243,10 @@ Boot_loop:
 
 		//Message from udp
 		case msg_in = <-udp_rx_c:
-			fmt.Println("AMANAGER: udp input")
 			switch msg_in.Type {
 
 			//Weight request
 			case types.REQUEST_WEIGHT:
-				fmt.Println("AMANAGER: weight is requested")
 				tasks_temp = nil
 				tasks_temp = slice2tasks(msg_in.Data)
 				if len(tasks_temp) > 0 {
@@ -271,9 +267,7 @@ Boot_loop:
 					for i := 0; i < len(assigned_tasks); i++ {
 						copy_assigned = append(copy_assigned, assigned_tasks[i])
 					}
-					fmt.Println("Assigned tasks before calc weight:", assigned_tasks)
 					weight, _ = addTask(copy_assigned, task_new, elev_status)
-					fmt.Println("Assigned tasks after calc weight:", assigned_tasks)
 
 					//Send weight to source
 					msg_out = types.MainData{Destination: msg_in.Source, Type: types.GIVE_WEIGHT}
@@ -307,13 +301,11 @@ Boot_loop:
 						fmt.Println("AMANAGER: been assigned an already finished task!")
 					}
 					task_new.Assigned = 255
-					fmt.Println("Assigned tasks before being assigned from another elevator:", assigned_tasks)
 					copy_assigned = nil
 					for i := 0; i < len(assigned_tasks); i++ {
 						copy_assigned = append(copy_assigned, assigned_tasks[i])
 					}
 					_, assigned_tasks = addTask(copy_assigned, task_new, elev_status)
-					fmt.Println("Assigned tasks after being assigned from another elevator:", assigned_tasks)
 
 					//Push backup
 					msg_out = types.MainData{Destination: "backup", Type: types.PUSH_BACKUP, Data: tasks2slice(assigned_tasks)}
@@ -342,6 +334,7 @@ Boot_loop:
 								}
 							}
 							if msg_in.Type == types.ACK_BACKUP && alike != 0 {
+								fmt.Println("AMANAGER: Backup sucsessfully pushed and ack-ed")
 								break Push_backup_3
 							}
 						case <-time.After(types.RETRY_BACKUP_RESPONSE):
@@ -376,7 +369,6 @@ Boot_loop:
 			case types.SET_LIGHT:
 				tasks_temp = nil
 				tasks_temp = slice2tasks(msg_in.Data)
-				fmt.Println("AMANAGER: Tasks that need light:", tasks_temp)
 				if len(tasks_temp) > 0 {
 					for i := 0; i < len(tasks_temp); i++ {
 						task_new = tasks_temp[i]
@@ -468,8 +460,6 @@ func tasks2slice(tasks []types.Task) [][]int {
 }
 
 func addTask(tasks []types.Task, task types.Task, status types.Status) (int, []types.Task) {
-	fmt.Println("INPUT to addTask:", tasks)
-	fmt.Println("INPUT task to addTask:", task)
 
 	distance := taskDistance(task, status)
 	added := 0
@@ -491,7 +481,6 @@ func addTask(tasks []types.Task, task types.Task, status types.Status) (int, []t
 		queuePos = len(tasks)
 	}
 	weight = distance + (queuePos-1)*posWeight
-	fmt.Println("OUTPUT addTask:", tasks)
 	return weight, tasks
 }
 
