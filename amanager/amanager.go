@@ -11,7 +11,6 @@ func Assigned_tasks_manager(elev_status_c <-chan types.Status, elev_task_c chan<
 	udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData,
 	chan_backupRecieve <-chan types.MainData) {
 
-	//Initializing variables
 	var msg_in types.MainData
 	var msg_out types.MainData
 	var assigned_tasks []types.Task
@@ -47,14 +46,12 @@ Boot_loop:
 		}
 		select {
 		case msg_in = <-chan_backupRecieve:
-			fmt.Println("Backup response:", msg_in)
 			if msg_in.Type == types.GIVE_BACKUP {
 				assigned_tasks = slice2tasks(msg_in.Data)
 				fmt.Println("AMANGER: backup loaded")
 				break Boot_loop
 			}
 		case <-time.After(types.RETRY_BACKUP_RESPONSE):
-			//fmt.Println("AMANAGER: requesting backup, retry")
 			udp_tx_c <- msg_out
 		}
 	}
@@ -65,7 +62,7 @@ Boot_loop:
 
 	//Reading channels for input
 	for {
-		//Input from controller, i.e. new status from controller
+		//Input from controller
 		select {
 		case elev_status = <-elev_status_c:
 			if elev_status.Finished != 0 {
@@ -124,7 +121,6 @@ Boot_loop:
 							break Push_backup_1
 						}
 					case <-time.After(types.RETRY_BACKUP_RESPONSE):
-						//fmt.Println("AMANAGER: pushing backup, retry")
 						udp_tx_c <- msg_out
 					}
 				}
@@ -161,7 +157,7 @@ Boot_loop:
 		case <-time.After(types.PAUSE_AMAGER):
 		}
 
-		//Start on new task if we finished the last
+		//Start on new task if we are finished with last
 		if task_current.Finished != 0 {
 			if len(assigned_tasks) > 0 {
 				task_current = assigned_tasks[0]
@@ -221,7 +217,6 @@ Boot_loop:
 						break Push_backup_2
 					}
 				case <-time.After(types.RETRY_BACKUP_RESPONSE):
-					//fmt.Println("AMANAGER: pushing backup, retry")
 					udp_tx_c <- msg_out
 				}
 			}
@@ -342,7 +337,6 @@ Boot_loop:
 								break Push_backup_3
 							}
 						case <-time.After(types.RETRY_BACKUP_RESPONSE):
-							//fmt.Println("AMANAGER: pushing backup, retry")
 							udp_tx_c <- msg_out
 						}
 					}
@@ -543,36 +537,3 @@ const (
 	UP   = 1
 	DOWN = 0
 )
-
-//TEST QUEUING
-// func main() {
-// 	var tasks []types.Task
-// 	weight := 0
-
-// 	status := types.Status{Destination_floor: 3, Floor: 1, Prev_floor: 0, Finished: 0, Between_floors: 1}
-
-// 	task1 := types.Task{Type: 0, Floor: 0, Add: 255}
-// 	task2 := types.Task{Type: 0, Floor: 1, Add: 255}
-// 	task3 := types.Task{Type: 0, Floor: 2, Add: 255}
-// 	task4 := types.Task{Type: 1, Floor: 3, Add: 255}
-// 	task5 := types.Task{Type: 1, Floor: 2, Add: 255}
-// 	task6 := types.Task{Type: 1, Floor: 1, Add: 255}
-
-// 	weight, tasks = amanager.AddTask(tasks, task1, status)
-// 	fmt.Println("Weight:", weight)
-// 	weight, tasks = amanager.AddTask(tasks, task2, status)
-// 	fmt.Println("Weight:", weight)
-// 	weight, tasks = amanager.AddTask(tasks, task3, status)
-// 	fmt.Println("Weight:", weight)
-// 	weight, tasks = amanager.AddTask(tasks, task4, status)
-// 	fmt.Println("Weight:", weight)
-// 	weight, tasks = amanager.AddTask(tasks, task5, status)
-// 	fmt.Println("Weight:", weight)
-// 	weight, tasks = amanager.AddTask(tasks, task6, status)
-
-// 	fmt.Println("Tasks:")
-// 	for i := 0; i < len(tasks); i++ {
-// 		fmt.Println(tasks[i])
-// 	}
-// 	fmt.Println("Weight:", weight)
-// }
