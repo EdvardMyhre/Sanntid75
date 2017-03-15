@@ -217,7 +217,7 @@ func Pending_task_manager(channel_from_button_intermediary <-chan types.Task,
 				fmt.Println("Message to Distributor SENT")
 				adjust_pendinglist(sendOrder.Type, sendOrder.Floor, 0, true)
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
-				//fmt.Println("Message to Distributor FAILED to send")
+				fmt.Println("Message to Distributor FAILED to send")
 			}
 		}
 		time.Sleep(10 * time.Millisecond)

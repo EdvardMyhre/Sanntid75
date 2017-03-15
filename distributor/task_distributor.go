@@ -28,8 +28,8 @@ import (
 
 // }
 
-func task_distributor(channel_to_task_manager chan types.Task, channel_from_task_manager chan types.Task,
-	channel_to_network chan types.MainData, channel_from_network chan types.MainData) {
+func Task_distributor(channel_from_task_manager chan types.Task, channel_to_task_manager chan types.Task,
+	channel_from_network chan types.MainData, channel_to_network chan types.MainData) {
 
 	fmt.Println("task distributor, Connectivity test")
 
@@ -54,6 +54,9 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 	var message_distributingOrder types.MainData
 	fmt.Println("Just so Go doesnt complain about varible usage: ", message_distributingOrder)
 
+	var iterate_counter int
+	iterate_counter = 0
+
 	for {
 		switch task_distributor_state {
 		case waiting_for_newOrder:
@@ -61,8 +64,10 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 			case inputOrder := <-channel_from_task_manager:
 
 				currentOrder = inputOrder
-				fmt.Println("Received new order from Task Manager: ", currentOrder)
+				//fmt.Println("Received new order from Task Manager: ", currentOrder)
+				iterate_counter = 0
 				task_distributor_state = confirm_order
+			case <-channel_from_network:
 			default:
 				//No message ready for read. Do nothing
 
@@ -71,9 +76,9 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 			//Send a confirmation message back to pending manager. (To start timer)
 			currentOrder.Finished = 0
 			currentOrder.Assigned = 255
-			fmt.Println("CURRENT ORDER WHEN SENDING CONFIRMATION: ", currentOrder)
 			select {
 			case channel_to_task_manager <- currentOrder:
+				//fmt.Println("CURRENT ORDER WHEN SENDING CONFIRMATION: ", currentOrder)
 				//Set up data for network
 				message_distributingOrder.Destination = "broadcast"
 				message_distributingOrder.Type = types.REQUEST_WEIGHT
@@ -83,13 +88,18 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 				networkOrder = append(networkOrder, currentOrder.Floor)
 				networkOrder = append(networkOrder, 0)
 				networkOrder = append(networkOrder, 0)
-				//fmt.Println("										REQUEST WEIGHT NETWORKORDER: ",networkOrder)
 
 				message_distributingOrder.Data = [][]int{networkOrder}
-				//fmt.Println("										REQUEST WEIGHT DATA FIELD: ",message_distributingOrder.Data)
+				iterate_counter = 0
 				task_distributor_state = request_weights
+			case <-channel_from_network:
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
-
+				if iterate_counter > 5 {
+					task_distributor_state = waiting_for_newOrder
+					fmt.Println("Distributor unable to send REQUEST WEIGHTS message to network")
+				} else {
+					iterate_counter += 1
+				}
 			}
 
 		case request_weights:
@@ -102,6 +112,13 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 				task_distributor_state = waiting_for_weightResponses
 
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+				if iterate_counter > 5 {
+					task_distributor_state = waiting_for_newOrder
+					fmt.Println("Distributor unable to send REQUEST WEIGHTS message to network")
+				} else {
+					iterate_counter += 1
+				}
+
 			}
 
 		case waiting_for_weightResponses:
@@ -113,6 +130,7 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 			default:
 				if time.Since(task_dist_timestamp) > types.TIMEOUT_NETWORK_MESSAGE_RESPONSE {
 					task_distributor_state = distribute_order
+					iterate_counter = 0
 				} else {
 					//Do nothing
 				}
@@ -121,6 +139,7 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 			fmt.Println("Weight responses given: ", weightResponses)
 			if len(weightResponses) <= 0 {
 				fmt.Println("Did not receive any responses")
+				task_distributor_state = waiting_for_newOrder
 			} else {
 				var responseChosen types.MainData = weightResponses[0]
 				for i := 0; i < len(weightResponses); i++ {
@@ -145,9 +164,18 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 
 				currentOrder.Finished = 1
 				currentOrder.Assigned = 0
-				channel_to_task_manager <- currentOrder
-
-				task_distributor_state = waiting_for_newOrder
+				select {
+				case channel_to_task_manager <- currentOrder:
+					fmt.Println("Order distributed")
+					task_distributor_state = waiting_for_newOrder
+				case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+					if iterate_counter > 5 {
+						fmt.Println("Failed to send DISTRIBUTE_ORDER")
+						task_distributor_state = waiting_for_newOrder
+					} else {
+						iterate_counter += 1
+					}
+				}
 
 			}
 
@@ -158,6 +186,7 @@ func task_distributor(channel_to_task_manager chan types.Task, channel_from_task
 			fmt.Println("")
 
 		}
+
 	}
 
 }

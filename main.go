@@ -7,6 +7,7 @@ import (
 
 import (
 	"./amanager"
+	"./distributor"
 	"./driver"
 	"./elevator"
 	"./pending_manager"
@@ -30,6 +31,9 @@ func main() {
 	chan_networkToAmanager := make(chan types.MainData) //Network -> amanager
 	chan_amanagerToNetwork := make(chan types.MainData) //Amanager -> network
 
+	chan_distributorToNetwork := make(chan types.MainData) //Distributor -> network
+	chan_networkToDistributor := make(chan types.MainData) //network -> Distributor
+
 	go pending_manager.Pending_task_manager(chan_button,
 		chan_distStatus, chan_newDistOrder,
 		chan_assignedTaskStatus, chan_assignedTask,
@@ -39,6 +43,9 @@ func main() {
 		chan_assignedTask, chan_assignedTaskStatus,
 		chan_networkToAmanager, chan_amanagerToNetwork)
 
+	go distributor.Task_distributor(chan_newDistOrder, chan_distStatus,
+		chan_networkToDistributor, chan_distributorToNetwork)
+
 	go elevator.Controller(chan_elevTask, chan_elevStatus)
 
 	go elevator.ButtonPoller(chan_button)
@@ -46,6 +53,7 @@ func main() {
 	for {
 		select {
 		case <-chan_amanagerToNetwork:
+		case <-chan_distributorToNetwork:
 		default:
 		}
 		time.Sleep(time.Millisecond)

@@ -43,10 +43,10 @@ const (
 	PAUSE_NET_LISTNER              = 2 * 1000000 * time.Nanosecond
 	TIMEOUT_BUTTON_POLLER_WAITTIME = 200 * 1000000 * time.Nanosecond
 
-	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 2000 * 1000000 * time.Nanosecond
+	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 1000 * 1000000 * time.Nanosecond
 	TIMEOUT_MESSAGE_SEND_WAITTIME    = 50 * 1000000 * time.Nanosecond
 	TIMEOUT_MODULE_DISTRIBUTOR       = 2000 * 1000000 * time.Nanosecond
-	TIMEOUT_PENDINGLIST_ORDER        = 5000 * 1000000 * time.Nanosecond
+	TIMEOUT_PENDINGLIST_ORDER        = 2000 * 1000000 * time.Nanosecond
 )
 
 const (
