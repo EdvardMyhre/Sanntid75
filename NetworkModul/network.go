@@ -7,7 +7,7 @@ import (
 	"./network/peers"
 	"flag"
 	"fmt"
-	"os"
+	//"os"
 	//"sort"
 	"math/rand"
 	"time"
@@ -173,7 +173,7 @@ func find_localip() string {
 			fmt.Println(err)
 			localIP = "DISCONNECTED"
 		}
-		id = fmt.Sprintf("%s-%d", localIP, os.Getpid())
+		id = fmt.Sprintf("%s-%d", localIP)
 	}
 	return id
 }
