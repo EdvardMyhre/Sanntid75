@@ -8,6 +8,7 @@ import (
 import (
 	"./NetworkModul"
 	"./amanager"
+	"./backup_manager"
 	"./distributor"
 	"./driver"
 	"./elevator"
@@ -50,6 +51,8 @@ func main() {
 		chan_assignedTaskStatus, chan_assignedTask,
 		chan_lostBackup)
 
+	go backup_manager.Backup_manager(chan_networkToPendig, chan_pendingToNetwork, chan_lostBackup)
+
 	go amanager.AssignedTasksManager(chan_elevStatus, chan_elevTask,
 		chan_assignedTask, chan_assignedTaskStatus,
 		chan_networkToAmanager, chan_amanagerToNetwork,
@@ -72,12 +75,7 @@ func main() {
 	go elevator.ButtonPoller(chan_button)
 
 	for {
-		select {
-		case <-chan_networkToPendig:
-			//fmt.Println("backup melding her!!!!!!!!!")
 
-		default:
-		}
 		time.Sleep(time.Millisecond)
 	}
 }

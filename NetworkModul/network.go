@@ -121,7 +121,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 					}
 				}*/
-				fmt.Println("Har jeg fått melding først?")
+				fmt.Println("Har jeg fått melding først?", myBackupAlive)
 				if myBackupAlive == false {
 					find_backup(id, p, &myBackupAlive, message_sendCh, &myBackupId)
 				}
