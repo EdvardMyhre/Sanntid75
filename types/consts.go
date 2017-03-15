@@ -35,7 +35,7 @@ const (
 
 const (
 	//First number is gives wait time in MILLISECONDS
-	TIMEOUT_BACKUP_RESPONSE        = int64(500 * 1000000)
+	TIMEOUT_BACKUP_RESPONSE        = int64(100 * 1000000)
 	RETRY_BACKUP_RESPONSE          = 5 * 1000000 * time.Nanosecond
 	TIMEOUT_AMANAGER_WAITTIME      = 100 * 1000000 * time.Nanosecond
 	PAUSE_AMAGER                   = 1 * 1000000 * time.Nanosecond
@@ -60,6 +60,7 @@ const (
 	ID_MODULE_DISTRIBUTOR    = 96  //011 xxxxx
 	ID_MODULE_BACKUP_MANAGER = 160 //101 xxxxx
 	ID_MODULE_AMANAGER       = 192 //110 xxxxx
+	ID_BACKUP_RESPONSE       = 255 //111 xxxxx
 
 )
 
@@ -70,8 +71,8 @@ const (
 	DISTRIBUTE_ORDER = (ID_MODULE_AMANAGER | 20) //xxx 10100
 
 	//Message types used by task manager
-	GIVE_BACKUP = (ID_MODULE_AMANAGER | 30) //xxx 11110 //Dette er ønsket svar på REQUEST_BACKUP.
-	ACK_BACKUP  = (ID_MODULE_AMANAGER | 29) //xxx 11101 //Dette er ønsket svar på PUSH_BACKUP.
+	GIVE_BACKUP = (ID_BACKUP_RESPONSE | 30) //xxx 11110 //Dette er ønsket svar på REQUEST_BACKUP.
+	ACK_BACKUP  = (ID_BACKUP_RESPONSE | 29) //xxx 11101 //Dette er ønsket svar på PUSH_BACKUP.
 
 	//Message types used by assigned tasks manager
 	GIVE_WEIGHT    = (ID_MODULE_DISTRIBUTOR | 18)    //xxx 10010

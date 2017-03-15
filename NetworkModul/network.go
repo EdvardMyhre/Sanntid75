@@ -1,10 +1,10 @@
 package network
 
 import (
+	"../types"
 	"./network/bcast"
 	"./network/localip"
 	"./network/peers"
-	"../types"
 	"flag"
 	"fmt"
 	"os"
@@ -14,7 +14,7 @@ import (
 )
 
 func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan types.MainData, n_to_a_tasks_manager chan types.MainData,
-	distri_to_n chan types.MainData, p_task_manager_to_n chan types.MainData, a_task_manager_to_n chan types.MainData) {
+	distri_to_n chan types.MainData, p_task_manager_to_n chan types.MainData, a_task_manager_to_n chan types.MainData, n_to_a_tasks_manager2 chan types.MainData) {
 
 	//-----------------------  Finner lokal ip og deklarerer myBackupId --------------------
 	id := find_localip()
@@ -52,6 +52,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 
 			case a := <-a_task_manager_to_n:
 				message_send = a
+
 			}
 			message_send.Source = id
 
@@ -91,7 +92,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 	}()
 	go func() {
 		for {
-			select{
+			select {
 			case a := <-message_receivedCh:
 				if a.Destination == id || a.Destination == "broadcast" {
 					switch a.Type & 224 {
@@ -103,6 +104,9 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 
 					case types.ID_MODULE_AMANAGER:
 						n_to_a_tasks_manager <- a
+
+					case types.ID_BACKUP_RESPONSE:
+						n_to_a_tasks_manager2 <- a
 
 					case types.ID_MODULE_NETWORK:
 						fmt.Println("NÅ kom meldingen:     ", a)
@@ -215,7 +219,6 @@ func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData) {
 
 }
 
-
 func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *string) {
 	for j := range p.Lost {
 		if *myBackupId == p.Lost[j] {
@@ -225,7 +228,6 @@ func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *stri
 		}
 	}
 }
-
 
 func is_who_i_am_backup_for_gone(backupFor []string, p peers.PeerUpdate, n_to_p_task_manager chan types.MainData) {
 	for i := range backupFor {
@@ -244,4 +246,3 @@ func is_who_i_am_backup_for_gone(backupFor []string, p peers.PeerUpdate, n_to_p_
 		}
 	}
 }
-

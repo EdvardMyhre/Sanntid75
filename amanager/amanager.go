@@ -8,7 +8,8 @@ import "time"
 
 func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- int,
 	pmanager_task_c <-chan types.Task, pmanager_status_c chan<- types.Task,
-	udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData) {
+	udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData,
+	chan_backupRecieve <-chan types.MainData) {
 
 	//Initializing variables
 	var msg_in types.MainData
@@ -44,7 +45,7 @@ Boot_loop:
 			break Boot_loop
 		}
 		select {
-		case msg_in = <-udp_rx_c:
+		case msg_in = <-chan_backupRecieve:
 			if msg_in.Type == types.GIVE_BACKUP {
 				assigned_tasks = slice2tasks(msg_in.Data)
 				fmt.Println("AMANGER: backup loaded")
@@ -102,7 +103,7 @@ Boot_loop:
 						break Push_backup_1
 					}
 					select {
-					case msg_in = <-udp_rx_c:
+					case msg_in = <-chan_backupRecieve:
 						backup_returned = slice2tasks(msg_in.Data)
 						alike = 255
 						if len(backup_returned) != len(assigned_tasks) {
@@ -153,11 +154,23 @@ Boot_loop:
 				}
 
 			}
+		case <-time.After(types.PAUSE_AMAGER):
+		}
 
-		//}
+		//Start on new task if we finished the last
+		if task_current.Finished != 0 {
+			if len(assigned_tasks) > 0 {
+				task_current = assigned_tasks[0]
+				select {
+				case elev_task_c <- task_current.Floor:
+				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
+					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
+				}
+			}
+		}
 
 		//Input from pmanager, i.e new task from pmanager, command from cab or timed-out tasks
-		//select {
+		select {
 		case task_new = <-pmanager_task_c:
 			if task_new.Assigned != 0 {
 				fmt.Println("AMANAGER: been assigned an already assigned task!")
@@ -180,7 +193,7 @@ Boot_loop:
 					break Push_backup_2
 				}
 				select {
-				case msg_in = <-udp_rx_c:
+				case msg_in = <-chan_backupRecieve:
 					backup_returned = slice2tasks(msg_in.Data)
 					alike = 255
 					if len(backup_returned) != len(assigned_tasks) {
@@ -219,11 +232,8 @@ Boot_loop:
 			case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
 				fmt.Println("AMANAGER: pmanager not responding!")
 			}
-		case <-time.After(types.PAUSE_AMAGER):
-		//}
 
 		//Message from udp
-		//select {
 		case msg_in = <-udp_rx_c:
 			fmt.Println("AMANAGER: udp input")
 			switch msg_in.Type {
@@ -297,7 +307,7 @@ Boot_loop:
 							break Push_backup_3
 						}
 						select {
-						case msg_in = <-udp_rx_c:
+						case msg_in = <-chan_backupRecieve:
 							backup_returned = slice2tasks(msg_in.Data)
 							alike = 255
 							if len(backup_returned) != len(assigned_tasks) {
@@ -399,18 +409,6 @@ Boot_loop:
 			}
 
 		case <-time.After(types.PAUSE_AMAGER):
-		}
-
-		//Start on new task if we finished the last
-		if task_current.Finished != 0 {
-			if len(assigned_tasks) > 0 {
-				task_current = assigned_tasks[0]
-				select {
-				case elev_task_c <- task_current.Floor:
-				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
-					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
-				}
-			}
 		}
 
 	} //end of inf loop

@@ -111,8 +111,8 @@ func Task_distributor(channel_from_task_manager <-chan types.Task, channel_to_ta
 				weightResponses = nil
 
 				task_distributor_state = waiting_for_weightResponses
-
-			case <-time.After(500 * 1000000 * time.Nanosecond):
+			case <-channel_from_network:
+			case <-time.After(1000 * 1000000 * time.Nanosecond):
 				if iterate_counter > 5 {
 					task_distributor_state = waiting_for_newOrder
 					fmt.Println("Distributor unable to send REQUEST WEIGHTS message to network")
