@@ -46,6 +46,7 @@ Boot_loop:
 		}
 		select {
 		case msg_in = <-chan_backupRecieve:
+			fmt.Println("AMAGER: backup response:", msg_in)
 			if msg_in.Type == types.GIVE_BACKUP {
 				assigned_tasks = slice2tasks(msg_in.Data)
 				fmt.Println("AMANGER: backup loaded")
