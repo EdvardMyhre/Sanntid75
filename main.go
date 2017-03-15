@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"fmt"
+	"fmt"
 	"time"
 )
 
@@ -46,6 +46,14 @@ func main() {
 	go distributor.Task_distributor(chan_newDistOrder, chan_distStatus,
 		chan_networkToDistributor, chan_distributorToNetwork)
 
+	//AMANAGER OG DISTRIBUTOR UNDER ER FOR TEST VED DIREKTE KOBLING
+	//go amanager.AssignedTasksManager(chan_elevStatus, chan_elevTask,
+	//	chan_assignedTask, chan_assignedTaskStatus,
+	//	chan_distributorToNetwork, chan_amanagerToNetwork)
+
+	//go distributor.Task_distributor(chan_newDistOrder, chan_distStatus,
+	//	chan_amanagerToNetwork, chan_distributorToNetwork)
+
 	go elevator.Controller(chan_elevTask, chan_elevStatus)
 
 	go elevator.ButtonPoller(chan_button)
@@ -53,7 +61,9 @@ func main() {
 	for {
 		select {
 		case <-chan_amanagerToNetwork:
-		case <-chan_distributorToNetwork:
+		case msg1 := <-chan_distributorToNetwork:
+			fmt.Println("	Distributor sent message to network:", msg1)
+
 		default:
 		}
 		time.Sleep(time.Millisecond)

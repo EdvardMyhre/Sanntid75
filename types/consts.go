@@ -37,16 +37,16 @@ const (
 	//First number is gives wait time in MILLISECONDS
 	TIMEOUT_BACKUP_RESPONSE        = int64(500 * 1000000)
 	RETRY_BACKUP_RESPONSE          = 5 * 1000000 * time.Nanosecond
-	TIMEOUT_AMANAGER_WAITTIME      = 500 * 1000000 * time.Nanosecond
-	PAUSE_AMAGER                   = 5 * 1000000 * time.Nanosecond
-	PAUSE_ELEVATOR                 = 5 * 1000000 * time.Nanosecond
+	TIMEOUT_AMANAGER_WAITTIME      = 100 * 1000000 * time.Nanosecond
+	PAUSE_AMAGER                   = 1 * 1000000 * time.Nanosecond
+	PAUSE_ELEVATOR                 = 1 * 1000000 * time.Nanosecond
 	PAUSE_NET_LISTNER              = 2 * 1000000 * time.Nanosecond
 	TIMEOUT_BUTTON_POLLER_WAITTIME = 200 * 1000000 * time.Nanosecond
 
 	TIMEOUT_NETWORK_MESSAGE_RESPONSE = 1000 * 1000000 * time.Nanosecond
 	TIMEOUT_MESSAGE_SEND_WAITTIME    = 50 * 1000000 * time.Nanosecond
 	TIMEOUT_MODULE_DISTRIBUTOR       = 2000 * 1000000 * time.Nanosecond
-	TIMEOUT_PENDINGLIST_ORDER        = 2000 * 1000000 * time.Nanosecond
+	TIMEOUT_PENDINGLIST_ORDER        = 8000 * 1000000 * time.Nanosecond
 )
 
 const (

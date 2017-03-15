@@ -51,7 +51,7 @@ Boot_loop:
 				break Boot_loop
 			}
 		case <-time.After(types.RETRY_BACKUP_RESPONSE):
-			fmt.Println("AMANAGER: requesting backup, retry")
+			//fmt.Println("AMANAGER: requesting backup, retry")
 			udp_tx_c <- msg_out
 		}
 	}
@@ -118,7 +118,7 @@ Boot_loop:
 							break Push_backup_1
 						}
 					case <-time.After(types.RETRY_BACKUP_RESPONSE):
-						fmt.Println("AMANAGER: pushing backup, retry")
+						//fmt.Println("AMANAGER: pushing backup, retry")
 						udp_tx_c <- msg_out
 					}
 				}
@@ -153,23 +153,11 @@ Boot_loop:
 				}
 
 			}
-		case <-time.After(types.PAUSE_AMAGER):
-		}
 
-		//Start on new task if we finished the last
-		if task_current.Finished != 0 {
-			if len(assigned_tasks) > 0 {
-				task_current = assigned_tasks[0]
-				select {
-				case elev_task_c <- task_current.Floor:
-				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
-					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
-				}
-			}
-		}
+		//}
 
 		//Input from pmanager, i.e new task from pmanager, command from cab or timed-out tasks
-		select {
+		//select {
 		case task_new = <-pmanager_task_c:
 			if task_new.Assigned != 0 {
 				fmt.Println("AMANAGER: been assigned an already assigned task!")
@@ -209,7 +197,7 @@ Boot_loop:
 						break Push_backup_2
 					}
 				case <-time.After(types.RETRY_BACKUP_RESPONSE):
-					fmt.Println("AMANAGER: pushing backup, retry")
+					//fmt.Println("AMANAGER: pushing backup, retry")
 					udp_tx_c <- msg_out
 				}
 			}
@@ -232,15 +220,17 @@ Boot_loop:
 				fmt.Println("AMANAGER: pmanager not responding!")
 			}
 		case <-time.After(types.PAUSE_AMAGER):
-		}
+		//}
 
 		//Message from udp
-		select {
+		//select {
 		case msg_in = <-udp_rx_c:
+			fmt.Println("AMANAGER: udp input")
 			switch msg_in.Type {
 
 			//Weight request
 			case types.REQUEST_WEIGHT:
+				fmt.Println("AMANAGER: weight is requested")
 				tasks_temp = nil
 				tasks_temp = slice2tasks(msg_in.Data)
 				if len(tasks_temp) > 0 {
@@ -323,7 +313,7 @@ Boot_loop:
 								break Push_backup_3
 							}
 						case <-time.After(types.RETRY_BACKUP_RESPONSE):
-							fmt.Println("AMANAGER: pushing backup, retry")
+							//fmt.Println("AMANAGER: pushing backup, retry")
 							udp_tx_c <- msg_out
 						}
 					}
@@ -410,6 +400,19 @@ Boot_loop:
 
 		case <-time.After(types.PAUSE_AMAGER):
 		}
+
+		//Start on new task if we finished the last
+		if task_current.Finished != 0 {
+			if len(assigned_tasks) > 0 {
+				task_current = assigned_tasks[0]
+				select {
+				case elev_task_c <- task_current.Floor:
+				case <-time.After(types.TIMEOUT_AMANAGER_WAITTIME):
+					fmt.Println("AMANAGER: elevator.Controller not responding! TASKS ARE LOST")
+				}
+			}
+		}
+
 	} //end of inf loop
 }
 

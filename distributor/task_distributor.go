@@ -28,8 +28,8 @@ import (
 
 // }
 
-func Task_distributor(channel_from_task_manager chan types.Task, channel_to_task_manager chan types.Task,
-	channel_from_network chan types.MainData, channel_to_network chan types.MainData) {
+func Task_distributor(channel_from_task_manager <-chan types.Task, channel_to_task_manager chan<- types.Task,
+	channel_from_network <-chan types.MainData, channel_to_network chan<- types.MainData) {
 
 	fmt.Println("task distributor, Connectivity test")
 
@@ -105,13 +105,14 @@ func Task_distributor(channel_from_task_manager chan types.Task, channel_to_task
 		case request_weights:
 			select {
 			case channel_to_network <- message_distributingOrder:
+				fmt.Println("Distributor sent request weight message: ", message_distributingOrder)
 				//Update timestamp and clear response array
 				task_dist_timestamp = time.Now()
 				weightResponses = nil
 
 				task_distributor_state = waiting_for_weightResponses
 
-			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
+			case <-time.After(500 * 1000000 * time.Nanosecond):
 				if iterate_counter > 5 {
 					task_distributor_state = waiting_for_newOrder
 					fmt.Println("Distributor unable to send REQUEST WEIGHTS message to network")
@@ -124,6 +125,7 @@ func Task_distributor(channel_from_task_manager chan types.Task, channel_to_task
 		case waiting_for_weightResponses:
 			select {
 			case message_distributingOrder := <-channel_from_network:
+				fmt.Println("DISTRIBUTOR received message from network during weightResponse time")
 				if message_distributingOrder.Type == types.GIVE_WEIGHT {
 					weightResponses = append(weightResponses, message_distributingOrder)
 				}
