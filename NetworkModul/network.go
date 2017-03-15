@@ -57,8 +57,8 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 			message_send.Source = id
 
 			if message_send.Destination == "backup" {
-				//message_send.Destination = myBackupId
-				message_send.Destination = "broadcast"
+				message_send.Destination = myBackupId
+				//message_send.Destination = "broadcast"
 			}
 			message_sendCh <- message_send
 			time.Sleep(types.PAUSE_NET_LISTNER)
@@ -126,10 +126,10 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 //--------------------- Finner din backup  -----------------------------
 func find_backup(id string, p peers.PeerUpdate, myBackupAlive *bool, message_sendCh chan types.MainData, myBackupId *string) {
 
-	if len(p.Peers) >= 1 { //xxxxxxxxxxxxxxxxxxxxxxxxxxx endre >= til > xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	if len(p.Peers) > 1 { //xxxxxxxxxxxxxxxxxxxxxxxxxxx endre >= til > xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 		for {
 			i := rand.Intn(len(p.Peers))
-			if p.Peers[i] == id { //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx endre == id til != id xxxxxxxxxxxxxxxxxxxxxxxxxx
+			if p.Peers[i] != id { //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx endre == id til != id xxxxxxxxxxxxxxxxxxxxxxxxxx
 				*myBackupAlive = true
 				*myBackupId = p.Peers[i]
 
