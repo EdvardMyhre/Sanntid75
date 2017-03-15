@@ -104,7 +104,7 @@ Boot_loop:
 					}
 					select {
 					case msg_in = <-chan_backupRecieve:
-						fmt.Println("Backup response:", msg_in)
+						fmt.Println("AMAGER: backup response:", msg_in)
 						backup_returned = slice2tasks(msg_in.Data)
 						alike = 255
 						if len(backup_returned) != len(assigned_tasks) {
@@ -199,7 +199,7 @@ Boot_loop:
 				}
 				select {
 				case msg_in = <-chan_backupRecieve:
-					fmt.Println("Backup response:", msg_in)
+					fmt.Println("AMAGER: backup response:", msg_in)
 					backup_returned = slice2tasks(msg_in.Data)
 					alike = 255
 					if len(backup_returned) != len(assigned_tasks) {
@@ -319,7 +319,7 @@ Boot_loop:
 						}
 						select {
 						case msg_in = <-chan_backupRecieve:
-							fmt.Println("Backup response:", msg_in)
+							fmt.Println("AMAGER: backup response:", msg_in)
 							backup_returned = slice2tasks(msg_in.Data)
 							alike = 255
 							if len(backup_returned) != len(assigned_tasks) {
