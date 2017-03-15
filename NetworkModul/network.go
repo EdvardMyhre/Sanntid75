@@ -84,7 +84,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 						n_to_a_tasks_manager2 <- a
 
 					case types.ID_MODULE_NETWORK:
-						//fmt.Println("NÅ kom meldingen:     ", a)
+						fmt.Println("NÅ kom meldingen:     ", a)
 						message_receive_is_my_backup_alive(id, a, backupFor, message_sendCh)
 						my_backup_is_alive(id, &myBackupAlive, a)
 						backup_for(id, a, &backupFor)
@@ -99,6 +99,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 	if myBackupId == "" {
 		for i := 0; i < 5; i++ {
 			send_message_is_my_backup_alive(id, message_sendCh)
+			fmt.Println("inne i for loop send_message_alive")
 		}
 		fmt.Println("Har jeg fått melding først?")
 		/*if myBackupAlive == false {
