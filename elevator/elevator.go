@@ -62,7 +62,6 @@ func Controller(taskc <-chan int, statusc chan<- types.Status) {
 }
 
 func Button_poller(taskc chan<- types.Task) {
-	//Initializing variables
 	button := types.Button{}
 	task := types.Task{}
 	task.Finished = 0
@@ -132,40 +131,3 @@ func Button_poller(taskc chan<- types.Task) {
 		time.Sleep(types.PAUSE_ELEVATOR)
 	}
 }
-
-//TEST CONTROLLER
-// func main() {
-
-// 	driver.Init()
-// 	statusc := make(chan types.Status)
-// 	taskc := make(chan int)
-// 	go elevator.Controller(statusc, taskc)
-
-// 	for {
-// 		select {
-// 		case status := <-statusc:
-// 			fmt.Println("Destination floor: ", status.Destination_floor, " Floor : ", status.Floor, " Prev_floor: ", status.Prev_floor, " Finished: ", status.Finished, " Between floors: ", status.Between_floors)
-// 		case <-time.After(time.Second):
-// 		}
-// 		if rand.Intn(3) == 0 {
-// 			destination_floor := rand.Intn(4)
-// 			select {
-// 			case taskc <- destination_floor:
-// 			default:
-// 			}
-// 		}
-
-// 	}
-// }
-
-//TEST BUTTONS
-// func main() {
-// 	driver.Init()
-// 	taskc := make(chan types.Task)
-// 	go elevator.ButtonPoller(taskc)
-// 	for{
-// 		task := <- taskc
-// 		fmt.Println("Type: ", task.Type, " Floor: ", task.Floor)
-// 	}
-
-// }

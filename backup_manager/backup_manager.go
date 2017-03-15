@@ -13,20 +13,18 @@ type struct_backup_element struct {
 
 func Backup_manager(channel_from_network <-chan types.MainData, channel_to_network chan<- types.MainData,
 	channel_to_pending_manager chan<- types.MainData) {
-	//var message_maindata types.MainData
-	//CREATE MATRIX
+
 	var backup_matrix []struct_backup_element
 	var sendQueue_push []string
 	var sendQueue_request []string
 	var sendQueue_lostbackup []string
 
 	for {
-		//BEHAVIOR FOR RECEIVING FROM NETWORK
+		//Receive from network
 		select {
 		case network_message := <-channel_from_network:
-			//"REQUEST BACKUP" RECEIVED
+			//"REQUEST BACKUP" received
 			if network_message.Type == types.REQUEST_BACKUP {
-				//fmt.Println("REQUEST BACKUP RECEIVED: ", network_message)
 				var request_command_already_exists bool
 				request_command_already_exists = false
 				for i := 0; i < len(sendQueue_request); i++ {
@@ -37,12 +35,10 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 				}
 				if request_command_already_exists == false {
 					sendQueue_request = append(sendQueue_request, network_message.Source)
-					//fmt.Println("Received NEW REQUEST command message. Added to queue. Current request queue: ", sendQueue_request)
 				}
 
-				//"PUSH BACKUP" RECEIVED
+				//PUSH BACKUP received
 			} else if network_message.Type == types.PUSH_BACKUP {
-				//fmt.Println("PUSH BACKUP RECEIVED: ", network_message)
 				var backup_already_exists bool
 				var push_command_already_exists bool
 				backup_already_exists = false
@@ -55,27 +51,24 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 						break
 					}
 				}
-				//if not, create new element and append to matrix
 				if backup_already_exists == false {
 					var new_backup struct_backup_element
 					new_backup.BackupIP = network_message.Source
 					new_backup.BackupData = network_message.Data
 					backup_matrix = append(backup_matrix, new_backup)
 				}
+
 				//Check if response command already exists
 				for i := 0; i < len(sendQueue_push); i++ {
 					if sendQueue_push[i] == network_message.Source {
 						push_command_already_exists = true
 					}
 				}
-
-				//if not, create new command and append to list
 				if push_command_already_exists == false {
 					sendQueue_push = append(sendQueue_push, network_message.Source)
-					//fmt.Println("Received NEW push command message. Added to queue. Current queue: ", sendQueue_push)
 				}
 
-				//"BACKUP LOST" RECEIVED
+				//"BACKUP LOST" received
 			} else if network_message.Type == types.BACKUP_LOST {
 				//Check if task is already in queue
 				var command_already_exists bool
@@ -93,11 +86,9 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 
 		default:
-			//Do nothing
 		}
 
-		//BEHAVIOR FOR SENDING "PUSH" RESPONSE TO NETWORK
-		//If there's a an order in network sendQueue
+		//Behavior for sending "PUSH" response
 		if len(sendQueue_push) > 0 {
 			var push_index int
 			var push_backup_exists bool
@@ -118,14 +109,13 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 			select {
 			case channel_to_network <- push_message:
-				//fmt.Println("Sent push response back to: ", sendQueue_push[0])
-				//Delete element in index 0
+
 				sendQueue_push = append(sendQueue_push[1:])
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}
 
 		}
-		//BEHAVIOR FOR SENDING "REQUEST" RESPONSE TO NETWORK
+		//Behavior for sending "REQUEST" response
 		if len(sendQueue_request) > 0 {
 			var request_index int
 			var request_backup_exists bool
@@ -146,14 +136,14 @@ func Backup_manager(channel_from_network <-chan types.MainData, channel_to_netwo
 			}
 			select {
 			case channel_to_network <- request_message:
-				//fmt.Println("Sent request response back to: ", sendQueue_request[0])
+
 				sendQueue_request = append(sendQueue_request[1:])
 			case <-time.After(types.TIMEOUT_MESSAGE_SEND_WAITTIME):
 			}
 
 		}
 
-		//BEHAVIOR FOR SENDING "BACKUP LOST" TO PENDING MANAGER
+		//Behavior for sending "BACKUP LOST" response
 		if len(sendQueue_lostbackup) > 0 {
 			var lost_backup_index int
 			var lost_backup_exists bool

@@ -127,7 +127,6 @@ Boot_loop:
 
 				//Update local lights
 				for i := 0; i < len(tasks_temp); i++ {
-					fmt.Println("AMANAGER: Updating local lights: ON/OFF:", tasks_temp[i].Finished)
 					driver.SetButtonLamp(tasks_temp[i].Type, tasks_temp[i].Floor, 0)
 				}
 
