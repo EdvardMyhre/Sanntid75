@@ -103,6 +103,10 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 				}
 				is_who_i_am_backup_for_gone(backupFor, p, n_to_p_task_manager)
 				is_my_backup_gone(&myBackupAlive, p, &myBackupId)
+				fmt.Println("Min id:            ", id)
+				fmt.Println("Min backupid er:   ", myBackupId)
+				fmt.Println("Min backupfor:     ", backupFor)
+				fmt.Println("Min backupAlive:   ", myBackupAlive)
 
 			case <-time.After(time.Millisecond):
 			}
