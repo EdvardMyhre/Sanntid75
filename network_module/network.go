@@ -198,8 +198,8 @@ func message_receive_is_my_backup_alive(id string, m types.MainData, backupFor [
 
 func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData, myBackupId *string) {
 	if (m.Destination == id) && ((m.Type & 31) == types.IS_MY_BACKUP_ALIVE_TRUE) {
-		*myBackupAlive = true
 		*myBackupId = m.Source
+		*myBackupAlive = true
 	}
 
 }
@@ -207,8 +207,8 @@ func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData, myBack
 func is_my_backup_gone(myBackupAlive *bool, p peers.PeerUpdate, myBackupId *string) {
 	for j := range p.Lost {
 		if *myBackupId == p.Lost[j] {
-			*myBackupAlive = false
 			*myBackupId = ""
+			*myBackupAlive = false
 
 		}
 	}
