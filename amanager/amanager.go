@@ -138,7 +138,7 @@ Boot_loop:
 				for i := 0; i < len(tasks_temp); i++ {
 					driver.SetButtonLamp(tasks_temp[i].Type, tasks_temp[i].Floor, 0)
 					if tasks_temp[i].Type != types.BTN_TYPE_COMMAND {
-						button_lights[tasks_temp[i].Floor][tasks_temp[i].Type] = time.Since(time.Now())
+						button_lights[tasks_temp[i].Floor][tasks_temp[i].Type] = time.Time{}
 					}
 				}
 
@@ -393,7 +393,7 @@ Boot_loop:
 						if task_new.Type != types.BTN_TYPE_COMMAND {
 							if task_new.Finished != 0 {
 								driver.SetButtonLamp(task_new.Type, task_new.Floor, 0)
-								button_lights[task_new.Floor][task_new.Type] = time.Since(time.Now())
+								button_lights[task_new.Floor][task_new.Type] = time.Time{}
 							} else {
 								driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
 								button_lights[task_new.Floor][task_new.Type] = time.Now()
@@ -426,7 +426,7 @@ Boot_loop:
 					if task_new.Type != types.BTN_TYPE_COMMAND {
 						if task_new.Finished != 0 {
 							driver.SetButtonLamp(task_new.Type, task_new.Floor, 0)
-							button_lights[task_new.Floor][task_new.Type] = time.Since(time.Now())
+							button_lights[task_new.Floor][task_new.Type] = time.Time{}
 						} else {
 							driver.SetButtonLamp(task_new.Type, task_new.Floor, 1)
 							button_lights[task_new.Floor][task_new.Type] = time.Now()
@@ -447,7 +447,7 @@ Boot_loop:
 
 		for i := 0; i < types.NUMBER_OF_FLOORS; i++ {
 			for k := 0; k < 2; k++ {
-				if time.Since(button_lights[i][k]) > types.TIMEOUT_LIGHT_ON {
+				if !time.Time.IsZero(button_lights[i][k]) && time.Since(button_lights[i][k]) > types.TIMEOUT_LIGHT_ON {
 					task_new.Type = k
 					task_new.Floor = i
 					task_new.Finished = 0

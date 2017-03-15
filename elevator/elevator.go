@@ -9,32 +9,32 @@ func Controller(taskc <-chan int, statusc chan<- types.Status) {
 	var timeOpen time.Duration
 	timeOpen = 4
 
-	driver.SetMotorDirection(types.MOTOR_DIR_UP)
-	for driver.GetFloorSensorSignal() != 3 {
-	}
-	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
-	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
-	driver.SetDoorOpenLamp(types.LAMP_ON)
-	time.Sleep(time.Second * timeOpen)
-	driver.SetDoorOpenLamp(types.LAMP_OFF)
+	// driver.SetMotorDirection(types.MOTOR_DIR_UP)
+	// for driver.GetFloorSensorSignal() != 3 {
+	// }
+	// driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	// driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	// driver.SetDoorOpenLamp(types.LAMP_ON)
+	// time.Sleep(time.Second * timeOpen)
+	// driver.SetDoorOpenLamp(types.LAMP_OFF)
 
-	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
-	for driver.GetFloorSensorSignal() != 2 {
-	}
-	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
-	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
-	driver.SetDoorOpenLamp(types.LAMP_ON)
-	time.Sleep(time.Second * timeOpen)
-	driver.SetDoorOpenLamp(types.LAMP_OFF)
+	// driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
+	// for driver.GetFloorSensorSignal() != 2 {
+	// }
+	// driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	// driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	// driver.SetDoorOpenLamp(types.LAMP_ON)
+	// time.Sleep(time.Second * timeOpen)
+	// driver.SetDoorOpenLamp(types.LAMP_OFF)
 
-	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
-	for driver.GetFloorSensorSignal() != 1 {
-	}
-	driver.SetMotorDirection(types.MOTOR_DIR_STOP)
-	driver.SetFloorIndicator(driver.GetFloorSensorSignal())
-	driver.SetDoorOpenLamp(types.LAMP_ON)
-	time.Sleep(time.Second * timeOpen)
-	driver.SetDoorOpenLamp(types.LAMP_OFF)
+	// driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
+	// for driver.GetFloorSensorSignal() != 1 {
+	// }
+	// driver.SetMotorDirection(types.MOTOR_DIR_STOP)
+	// driver.SetFloorIndicator(driver.GetFloorSensorSignal())
+	// driver.SetDoorOpenLamp(types.LAMP_ON)
+	// time.Sleep(time.Second * timeOpen)
+	// driver.SetDoorOpenLamp(types.LAMP_OFF)
 
 	driver.SetMotorDirection(types.MOTOR_DIR_DOWN)
 	for driver.GetFloorSensorSignal() != 0 {
