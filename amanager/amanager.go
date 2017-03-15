@@ -6,7 +6,7 @@ import "../types"
 import "fmt"
 import "time"
 
-func AssignedTasksManager(elev_status_c <-chan types.Status, elev_task_c chan<- int,
+func Assigned_tasks_manager(elev_status_c <-chan types.Status, elev_task_c chan<- int,
 	pmanager_task_c <-chan types.Task, pmanager_status_c chan<- types.Task,
 	udp_rx_c <-chan types.MainData, udp_tx_c chan<- types.MainData,
 	chan_backupRecieve <-chan types.MainData) {

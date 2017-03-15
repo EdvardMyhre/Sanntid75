@@ -6,12 +6,12 @@ import (
 )
 
 import (
-	"./NetworkModul"
 	"./amanager"
 	"./backup_manager"
 	"./distributor"
 	"./driver"
 	"./elevator"
+	"./network_module"
 	"./pending_manager"
 	"./types"
 )
@@ -36,24 +36,24 @@ func main() {
 	chan_distributorToNetwork := make(chan types.MainData) //Distributor -> network
 	chan_networkToDistributor := make(chan types.MainData) //network -> Distributor
 
-	chan_backupReply := make(chan types.MainData) // all responses to backup -> amanager
+	chan_backupReply := make(chan types.MainData) // Backup -> Amanager
 
-	chan_pendingToNetwork := make(chan types.MainData) //Pending -> network
-	chan_networkToPendig := make(chan types.MainData)  //network -> Pending
+	chan_backupToNetwork := make(chan types.MainData) //Backup -> Network
+	chan_networkToBackup := make(chan types.MainData) //Network -> Backup
 
-	go network.Network_start(chan_networkToDistributor, chan_networkToPendig, chan_networkToAmanager,
-		chan_distributorToNetwork, chan_pendingToNetwork, chan_amanagerToNetwork, chan_backupReply)
+	go network.Network_start(chan_networkToDistributor, chan_networkToBackup, chan_networkToAmanager,
+		chan_distributorToNetwork, chan_backupToNetwork, chan_amanagerToNetwork, chan_backupReply)
 
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 5)
 
 	go pending_manager.Pending_task_manager(chan_button,
 		chan_distStatus, chan_newDistOrder,
 		chan_assignedTaskStatus, chan_assignedTask,
 		chan_lostBackup)
 
-	go backup_manager.Backup_manager(chan_networkToPendig, chan_pendingToNetwork, chan_lostBackup)
+	go backup_manager.Backup_manager(chan_networkToBackup, chan_backupToNetwork, chan_lostBackup)
 
-	go amanager.AssignedTasksManager(chan_elevStatus, chan_elevTask,
+	go amanager.Assigned_tasks_manager(chan_elevStatus, chan_elevTask,
 		chan_assignedTask, chan_assignedTaskStatus,
 		chan_networkToAmanager, chan_amanagerToNetwork,
 		chan_backupReply)
@@ -61,18 +61,9 @@ func main() {
 	go distributor.Task_distributor(chan_newDistOrder, chan_distStatus,
 		chan_networkToDistributor, chan_distributorToNetwork)
 
-	//AMANAGER OG DISTRIBUTOR UNDER ER FOR TEST VED DIREKTE KOBLING
-	/*go amanager.AssignedTasksManager(chan_elevStatus, chan_elevTask,
-		chan_assignedTask, chan_assignedTaskStatus,
-		chan_distributorToNetwork, chan_amanagerToNetwork,
-		chan_backupReply)
-
-	go distributor.Task_distributor(chan_newDistOrder, chan_distStatus,
-		chan_amanagerToNetwork, chan_distributorToNetwork)*/
-
 	go elevator.Controller(chan_elevTask, chan_elevStatus)
 
-	go elevator.ButtonPoller(chan_button)
+	go elevator.Button_poller(chan_button)
 
 	for {
 

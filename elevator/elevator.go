@@ -61,7 +61,7 @@ func Controller(taskc <-chan int, statusc chan<- types.Status) {
 
 }
 
-func ButtonPoller(taskc chan<- types.Task) {
+func Button_poller(taskc chan<- types.Task) {
 	//Initializing variables
 	button := types.Button{}
 	task := types.Task{}
