@@ -86,7 +86,7 @@ func Network_start(n_to_distri chan types.MainData, n_to_p_task_manager chan typ
 					case types.ID_MODULE_NETWORK:
 						fmt.Println("NÅ kom meldingen:     ", a)
 						message_receive_is_my_backup_alive(id, a, backupFor, message_sendCh)
-						my_backup_is_alive(id, &myBackupAlive, a)
+						my_backup_is_alive(id, &myBackupAlive, a, &myBackupId)
 						backup_for(id, a, &backupFor)
 						//fmt.Println("backupFor:              ", backupFor)
 					}
@@ -221,17 +221,18 @@ func message_receive_is_my_backup_alive(id string, m types.MainData, backupFor [
 				message.Data = append(message.Data, row1)
 				message.Data = append(message.Data, row2)
 				message_sendCh <- message
-				fmt.Println("message_receive_backup_alive:    ", message)
+				//fmt.Println("message_receive_backup_alive:    ", message)
 
 			}
 		}
 	}
 }
 
-func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData) {
+func my_backup_is_alive(id string, myBackupAlive *bool, m types.MainData, myBackupId *string) {
 	if (m.Destination == id) && ((m.Type & 31) == types.IS_MY_BACKUP_ALIVE_TRUE) {
 		*myBackupAlive = true
-		fmt.Println("my_backup_is_alive xxxxxxxxxxxxxxxxxxxxxx:    ", *myBackupAlive)
+		*myBackupId = m.Source
+		//fmt.Println("my_backup_is_alive xxxxxxxxxxxxxxxxxxxxxx:    ", *myBackupAlive)
 	}
 
 }
